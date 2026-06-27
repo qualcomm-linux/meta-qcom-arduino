@@ -7,6 +7,7 @@ SRC_URI = "\
     git://github.com/arduino/u-boot.git;branch=${SRCBRANCH};protocol=https \
     file://0001-Add-support-for-OpenSSL-Provider-API.patch \
     file://env-emmc.cfg \
+    file://asix88179.cfg \
 "
 SRCBRANCH = "qcom-mainline"
 SRCREV = "8008ca96a4dc53ddb3e51b96ea7e86d881ab7969"
