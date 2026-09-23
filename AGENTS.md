@@ -93,6 +93,10 @@ export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml"
 export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-next.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
+# Build with the linux-qcom 6.18 kernel instead of the machine default
+export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-6.18.yml"
+"${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
+
 # World build (all recipes from meta-qcom and this layer)
 export KAS_YAMLS="ci/uno-q.yml:ci/world.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"

@@ -171,7 +171,12 @@ jobs:
           - type: default
             dirname: ""
             yamlfile: ""
+          - type: 6.18
+            dirname: "_linux-qcom-6.18"
+            yamlfile: ":ci/linux-qcom-6.18.yml"
         include:
+          # uno-q defaults to linux-arduino, so also build it with
+          # linux-qcom-next, the default kernel of the other machines
           - machine: uno-q
             distro:
                 name: qcom-distro
@@ -183,9 +188,6 @@ jobs:
     uses: qualcomm-linux/meta-qcom/.github/workflows/compile.yml@master
     with:
       name: ${{ matrix.machine }}/${{ matrix.distro.name }}${{ matrix.kernel.dirname }}
-      # Alternate kernel builds are extra coverage rather than a gate, so
-      # keep them out of the pull request profile.
-      enabled: ${{ inputs.profile != 'pr' || matrix.kernel.type == 'default' }}
       # One world build per machine is enough for compile coverage. This
       # layer's ci/world.yml enables both layer-qcom and layer-qcom-arduino,
       # so a world build is expensive and the qcom-distro and alternate
@@ -198,6 +200,7 @@ jobs:
       kernel_yaml: ${{matrix.kernel.yamlfile}}
       kernel_dirname: ${{matrix.kernel.dirname}}
       cache_dir: ${{ needs.compile-env.outputs.CACHE_DIR }}
+      profile: ${{ inputs.profile }}
 
   publish_summary:
     needs: [github-cache-check, compile]
