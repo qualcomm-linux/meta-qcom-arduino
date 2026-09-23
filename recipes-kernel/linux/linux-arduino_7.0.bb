@@ -7,11 +7,11 @@ inherit kernel cml1
 
 COMPATIBLE_MACHINE = "(uno-q)"
 
-LINUX_VERSION ?= "7.0"
+LINUX_VERSION ?= "7.0.14"
 
 PV = "${LINUX_VERSION}"
 
-SRCREV ?= "122c2c22d838ca826e7f4e7360df96fb4e8f7ad2"
+SRCREV ?= "f2e5cd16ede51a1bfaf2d4e179b74c6aaca8e438"
 SRCBRANCH ?= "nobranch=1"
 
 SRC_URI = "\
