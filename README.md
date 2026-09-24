@@ -97,6 +97,7 @@ opening a pull request.
 ## Maintainer(s)
 
 - Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+- Jose Quaresma <jose.quaresma@oss.qualcomm.com>
 
 ## License
 
