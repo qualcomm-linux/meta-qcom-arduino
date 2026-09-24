@@ -77,9 +77,25 @@ jobs:
       pr_number: "${{ inputs.pr_number }}"
       pr_url: "${{ inputs.pr_url }}"
 
+  test-qcom-distro_linux-qcom-6-18:
+    needs: [prepare-env]
+    name: "Test qcom-distro_linux-qcom-6.18"
+    uses: ./.github/workflows/test-distro.yml
+    secrets: inherit
+    with:
+      build_id: "${{ inputs.build_id }}"
+      devices: "uno-q,ventuno-q"
+      project_name: "${{ needs.prepare-env.outputs.lava-test-plans-project }}"
+      distro_name: "qcom-distro"
+      distro_suffix: "_linux-qcom-6.18"
+      lava_test_plans_ref: "${{ needs.prepare-env.outputs.lava-test-plans-ref }}"
+      testkit_ref: "${{ needs.prepare-env.outputs.testkit-ref }}"
+      pr_number: "${{ inputs.pr_number }}"
+      pr_url: "${{ inputs.pr_url }}"
+
   collect-ids:
     name: "Collect Summary artifact IDs"
-    needs: [test-nodistro, test-qcom-distro]
+    needs: [test-nodistro, test-qcom-distro, test-qcom-distro_linux-qcom-6-18]
     if: |
       always()
       && contains(needs.*.result, 'success')
@@ -96,5 +112,6 @@ jobs:
         env:
           NODISTRO_SUMMARY_ID: ${{ needs.test-nodistro.outputs.summary_id }}
           QCOM_DISTRO_SUMMARY_ID: ${{ needs.test-qcom-distro.outputs.summary_id }}
+          QCOM_DISTRO_6_18_SUMMARY_ID: ${{ needs.test-qcom-distro_linux-qcom-6-18.outputs.summary_id }}
         run: |
-          echo "artifact_ids=${NODISTRO_SUMMARY_ID},${QCOM_DISTRO_SUMMARY_ID}" >> $GITHUB_OUTPUT
+          echo "artifact_ids=${NODISTRO_SUMMARY_ID},${QCOM_DISTRO_SUMMARY_ID},${QCOM_DISTRO_6_18_SUMMARY_ID}" >> $GITHUB_OUTPUT
