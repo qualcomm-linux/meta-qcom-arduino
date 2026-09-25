@@ -171,20 +171,20 @@ jobs:
           - type: default
             dirname: ""
             yamlfile: ""
-          - type: 6.18
-            dirname: "_linux-qcom-6.18"
-            yamlfile: ":ci/linux-qcom-6.18.yml"
+          - type: qcom-next
+            dirname: "_linux-qcom-next"
+            yamlfile: ":ci/linux-qcom-next.yml"
         include:
-          # uno-q defaults to linux-arduino, so also build it with
-          # linux-qcom-next, the default kernel of the other machines
+          # uno-q defaults to linux-qcom 6.18, so also build it with
+          # linux-arduino, the board kernel used on the main branch
           - machine: uno-q
             distro:
                 name: qcom-distro
                 yamlfile: ':ci/qcom-distro.yml'
             kernel:
-                type: qcom-next
-                dirname: "_linux-qcom-next"
-                yamlfile: ":ci/linux-qcom-next.yml"
+                type: arduino
+                dirname: "_linux-arduino"
+                yamlfile: ":ci/linux-arduino.yml"
     uses: qualcomm-linux/meta-qcom/.github/workflows/compile.yml@master
     with:
       name: ${{ matrix.machine }}/${{ matrix.distro.name }}${{ matrix.kernel.dirname }}
