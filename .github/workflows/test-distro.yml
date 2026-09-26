@@ -64,7 +64,7 @@ jobs:
 
       - name: Run lava-test-plans
         id: lava-test-plans
-        uses: qualcomm-linux/meta-qcom/.github/actions/lava-test-plans@master
+        uses: qualcomm-linux/meta-qcom/.github/actions/lava-test-plans@wrynose
         with:
           machines: ${{ inputs.devices }}
           distro_name: ${{ inputs.distro_name }}${{ inputs.distro_suffix }}
@@ -191,7 +191,7 @@ jobs:
 
       - name: Run lava-test-plans
         id: lava-test-plans
-        uses: qualcomm-linux/meta-qcom/.github/actions/lava-test-plans@master
+        uses: qualcomm-linux/meta-qcom/.github/actions/lava-test-plans@wrynose
         with:
           machines: ${{ steps.determine-device-list.outputs.PREMERGE_DEVICE_LIST }}
           distro_name: ${{ inputs.distro_name }}${{ inputs.distro_suffix }}
@@ -265,7 +265,7 @@ jobs:
 
       - name: Generate Summary
         id: generate-summary
-        uses: qualcomm-linux/meta-qcom/.github/actions/test-job-summary@master
+        uses: qualcomm-linux/meta-qcom/.github/actions/test-job-summary@wrynose
         with:
           build_id: ${{ github.run_id }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}

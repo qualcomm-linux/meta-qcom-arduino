@@ -1,0 +1,42 @@
+From 4b8d998ea4c30605eceb1d9828c6ba57bf45a660 Mon Sep 17 00:00:00 2001
+From: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+Date: Sat, 26 Sep 2026 00:56:10 +0000
+Subject: [PATCH] qcom-ptool: update qcom-ptool revision
+
+The following changes were merged in qcom-ptool:
+
+Igor Opaniuk (3):
+      loaders: add named GPT attribute fields to the YAML source
+      tests: pin conf/yaml parity for the named attribute fields
+      CONTRIBUTING: require YAML schema parity for new loader options
+
+Ricardo Salveti (1):
+      qrb2210-unoq-abl: provide a pre-edk2 version of partition tables
+
+Vivek Puar (1):
+      platforms/shikra-evk: add missing SYSFW_VERSION partition
+
+Wenwen Fu (1):
+      gen_udev_rules: derive raw rules from partition layouts
+
+Upstream-Status: Submitted [https://github.com/qualcomm-linux/meta-qcom/pull/3242]
+
+Assisted-by: Claude Code:claude-opus-5-5
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+---
+ recipes-bsp/partition/qcom-ptool.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/recipes-bsp/partition/qcom-ptool.inc b/recipes-bsp/partition/qcom-ptool.inc
+index 4a4dfe6b..6aa9f60c 100644
+--- a/recipes-bsp/partition/qcom-ptool.inc
++++ b/recipes-bsp/partition/qcom-ptool.inc
+@@ -3,4 +3,4 @@ LICENSE = "BSD-3-Clause"
+ LIC_FILES_CHKSUM = "file://LICENSE;md5=b0a8acd90d872086b279ead88af03369"
+ 
+ SRC_URI = "git://github.com/qualcomm-linux/qcom-ptool.git;branch=main;protocol=https"
+-SRCREV = "1e0263055562fc6fe4e8010b20cb8ba7bef188a7"
++SRCREV = "2dec95bc7bf76efb5dddb392cc3bc241fd272f65"
+-- 
+2.43.0
+

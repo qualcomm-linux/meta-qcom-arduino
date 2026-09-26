@@ -1,7 +1,7 @@
 # meta-qcom-arduino
 
-[![Build on push (main)](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/push.yml?label=Build%20on%20push%20(main))](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/push.yml)
-[![Nightly Build (main)](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/nightly-build.yml?label=Nightly%20Build%20(main))](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/nightly-build.yml)
+[![Build on push](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/push.yml?branch=wrynose&label=Build%20on%20push)](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/push.yml?query=branch%3Awrynose)
+[![Nightly Build](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/nightly-build.yml?branch=wrynose&label=Nightly%20Build)](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/nightly-build.yml?query=branch%3Awrynose)
 
 ## Introduction
 
@@ -19,19 +19,20 @@ This layer depends on:
 ```text
 URI: https://github.com/openembedded/openembedded-core.git
 layers: meta
-branch: master
+branch: wrynose
 revision: HEAD
 
 URI: https://github.com/qualcomm-linux/meta-qcom.git
-branch: master
+branch: wrynose
 revision: HEAD
 ```
 
 ## Branches
 
 - **main:** Primary development branch, with focus on upstream support and
-  compatibility with the most recent Yocto Project release. LTS branches will
-  be created alongside the corresponding `meta-qcom` branches when needed.
+  compatibility with the most recent Yocto Project release.
+- **wrynose:** LTS branch based on the Yocto Project 6.0 release, used by
+  Qualcomm Linux 2.x, with linux-qcom 6.18 as the default kernel.
 
 ## Machine Support
 
@@ -55,7 +56,7 @@ the `kas-container` wrapper script. For more details, visit the
 2. Clone the meta-qcom-arduino layer
 
     ```bash
-    git clone https://github.com/qualcomm-linux/meta-qcom-arduino.git -b main
+    git clone https://github.com/qualcomm-linux/meta-qcom-arduino.git -b wrynose
     ```
 
 3. Build using the KAS configuration for one of the supported boards
@@ -84,6 +85,13 @@ For flashing instructions, refer to the
 Please submit any patches against the `meta-qcom-arduino` layer (branch
 **main**) by using the GitHub pull-request feature. Fork the repo, create a
 branch, do the work, rebase from upstream, and create the pull request.
+
+On the stable (branch **wrynose**) patches should be integrated as a backport
+whenever possible. See the backporting section of [AGENTS.md](AGENTS.md) for
+the backport workflow.
+
+If the changes cannot be submitted to (branch **main**), then they must be
+submitted to (branch **wrynose**), including the necessary explanation.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow,
 the layer rules and the commit subject and message requirements before

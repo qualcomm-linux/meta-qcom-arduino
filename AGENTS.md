@@ -1,4 +1,4 @@
-# Agent Guide for meta-qcom-arduino
+# Agent Guide for meta-qcom-arduino (wrynose / LTS branch)
 
 This file guides automation agents to run builds / checks the same way CI does:
 
@@ -7,6 +7,12 @@ This file guides automation agents to run builds / checks the same way CI does:
 - run `yocto-patchreview` routinely, and run `yocto-check-layer` before
   opening/updating a PR, via the CI helper scripts.
 
+> **This is the `wrynose` LTS branch.** It is not the primary development
+> branch. Changes are expected to land on **main** first and then be
+> **backported** here with `git cherry-pick -x`, unless they are specific to
+> `wrynose`. See [section 6](#6-pull-request--contribution-workflow-wrynose-lts)
+> and [section 8](#8-backporting-to-a-release-branch) for the full workflow.
+
 ## Project Overview
 
 meta-qcom-arduino is an OpenEmbedded / Yocto Project BSP layer for the
@@ -14,6 +20,10 @@ Arduino boards based on Qualcomm SoCs, maintained by Qualcomm. It depends on
 `meta-qcom` (the Qualcomm hardware enablement layer) and provides the machine
 configurations and board-specific recipes (bootloader, boot firmware, kernel
 and firmware packagegroups) for those boards.
+
+`wrynose` is the **LTS Stable branch**, built against the `wrynose` branch of
+`meta-qcom` and the Yocto Project wrynose release, with linux-qcom 6.18 as
+the default kernel of every board. `main` is the primary development branch.
 
 ## Agent skills
 
@@ -89,12 +99,12 @@ export KAS_YAMLS="ci/uno-q.yml"
 export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
-# Build uno-q with the linux-qcom-next kernel instead of linux-arduino
-export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-next.yml"
+# Build with the linux-qcom-next kernel instead of linux-qcom 6.18
+export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-next.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
-# Build with the linux-qcom 6.18 kernel instead of the machine default
-export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-6.18.yml"
+# Build uno-q with the linux-arduino kernel instead of linux-qcom 6.18
+export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-arduino.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
 # World build (all recipes from meta-qcom and this layer)
@@ -126,16 +136,18 @@ kas-container shell --skip repos_checkout ci/uno-q.yml -c "bitbake core-image-ba
 
 Use the helper scripts for CI parity whenever possible.
 
-## 6) Pull request / contribution workflow
+## 6) Pull request / contribution workflow (wrynose LTS)
 
-Follow the contribution workflow documented in
-[CONTRIBUTING.md](CONTRIBUTING.md):
+`wrynose` is the LTS branch. **Propose changes against `main` first**,
+following the contribution workflow documented in
+[CONTRIBUTING.md](CONTRIBUTING.md), and backport them to `wrynose` as
+described in [section 8](#8-backporting-to-a-release-branch).
 
-1. Target branch: **main**.
-2. Fork `qualcomm-linux/meta-qcom-arduino`, create a topic branch, implement changes.
-3. Rebase on latest upstream `main`.
-4. Open a GitHub pull request.
-5. Use PR discussion for review iteration.
+If the change **cannot** be submitted to `main` (it is specific to
+`wrynose`, e.g. it does not apply to `main` or `main` has diverged in a way
+that makes the change meaningless there), then submit it directly against
+`wrynose`, and **explain in the commit body and PR description why it is
+wrynose-only** and not a backport.
 
 Important constraints from `CONTRIBUTING.md`:
 
@@ -208,7 +220,7 @@ corrected in the patch where they are introduced.
 Fixes land on `main` first and are then backported to a release branch.
 Merged pull requests labelled `backport <branch>` (the workflow currently
 accepts `backport wrynose`) are backported automatically by
-`.github/workflows/backport.yml`; when a manual backport is needed
+`.github/workflows/backport.yml` on `main`; when a manual backport is needed
 (conflicts, or a change that only applies to the release branch), follow
 the same conventions the automation uses:
 

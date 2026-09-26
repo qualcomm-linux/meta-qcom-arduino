@@ -9,6 +9,10 @@ header:
 repos:
   meta-qcom:
     url: https://github.com/qualcomm-linux/meta-qcom
-    branch: master
+    branch: wrynose
+    patches:
+      qcom-ptool-unoq-abl:
+        repo: meta-qcom-arduino
+        path: patches/meta-qcom/0001-qcom-ptool-update-qcom-ptool-revision.patch
 
   meta-qcom-arduino:
