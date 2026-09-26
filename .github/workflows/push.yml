@@ -14,14 +14,14 @@ jobs:
       contents: read
       packages: read
       actions: read
-    uses: ./.github/workflows/build-yocto.yml
+    uses: $/.github/workflows/build-yocto.yml
   test:
     permissions:
       contents: read
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/test.yml
+    uses: $/.github/workflows/test.yml
     needs: [build]
     # One machine failing to build must not stop the machines that did build
     # from being tested. Wait for the build to finish, but run whatever its
@@ -39,7 +39,7 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/publish-results.yml
+    uses: $/.github/workflows/publish-results.yml
     needs: test
     # An implicit success() here would be suppressed by any failed ancestor,
     # including a build job for a machine that is not even tested, so publish

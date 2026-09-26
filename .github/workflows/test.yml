@@ -59,7 +59,7 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/test-distro.yml
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
@@ -80,7 +80,7 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/test-distro.yml
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
@@ -101,7 +101,7 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/test-distro.yml
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
