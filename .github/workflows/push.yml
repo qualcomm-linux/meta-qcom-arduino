@@ -28,7 +28,8 @@ jobs:
     # overall result was: lava-test-plans skips any machine with no build URL
     # artifact.
     if: ${{ !cancelled() }}
-    secrets: inherit
+    secrets:
+      LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
       build_id: ${{ github.run_id }}
   publish-test-results:
@@ -45,7 +46,8 @@ jobs:
     # whenever the tests actually ran. Results are worth publishing whether the
     # boots passed or failed.
     if: ${{ !cancelled() && needs.test.result != 'skipped' }}
-    secrets: inherit
+    secrets:
+      TEST_REPORTING_APP_TOKEN: ${{ secrets.TEST_REPORTING_APP_TOKEN }}
     with:
       workflow_id: ${{ github.run_id }}
       event_name: ${{ github.event_name }}
