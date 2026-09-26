@@ -21,7 +21,6 @@ jobs:
     uses: ./.github/workflows/build-yocto.yml
     with:
       skip_if_github_cached: true
-    secrets: inherit
   test-nightly:
     # As in push.yml, a machine failing to build must not stop the ones that
     # did build from being tested.
@@ -33,7 +32,8 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/test.yml
     needs: build-nightly
-    secrets: inherit
+    secrets:
+      LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
       build_id: ${{ github.run_id }}
   publish-test-results:
@@ -49,7 +49,8 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/publish-results.yml
     needs: [build-nightly, test-nightly]
-    secrets: inherit
+    secrets:
+      TEST_REPORTING_APP_TOKEN: ${{ secrets.TEST_REPORTING_APP_TOKEN }}
     with:
       workflow_id: ${{ github.run_id }}
       event_name: ${{ github.event_name }}
