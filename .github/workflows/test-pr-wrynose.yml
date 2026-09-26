@@ -150,8 +150,9 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    uses: ./.github/workflows/publish-results.yml
-    secrets: inherit
+    uses: $/.github/workflows/publish-results.yml
+    secrets:
+      TEST_REPORTING_APP_TOKEN: ${{ secrets.TEST_REPORTING_APP_TOKEN }}
     needs: [test-wrynose]
     with:
       commit: ${{ github.event.workflow_run.sha }}

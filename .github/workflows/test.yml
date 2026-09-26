@@ -18,6 +18,10 @@ on:
       summary_ids:
         description: "IDs of the test summary artifact"
         value: ${{ jobs.collect-ids.outputs.summary_ids }}
+    secrets:
+      LAVATOKEN:
+        required: true
+        description: "Token used to submit jobs to the LAVA lab"
 env:
   # git sha, tag or branch in lava-test-plans repository. Must include the
   # project named in LAVA_TEST_PLANS_PROJECT.
@@ -50,8 +54,14 @@ jobs:
   test-nodistro:
     needs: [prepare-env]
     name: "Test nodistro"
-    uses: ./.github/workflows/test-distro.yml
-    secrets: inherit
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
+    secrets:
+      LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
       build_id: "${{ inputs.build_id }}"
       devices: "uno-q,ventuno-q"
@@ -65,8 +75,14 @@ jobs:
   test-qcom-distro:
     needs: [prepare-env]
     name: "Test qcom-distro"
-    uses: ./.github/workflows/test-distro.yml
-    secrets: inherit
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
+    secrets:
+      LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
       build_id: "${{ inputs.build_id }}"
       devices: "uno-q,ventuno-q"
@@ -80,8 +96,14 @@ jobs:
   test-qcom-distro_linux-qcom-6-18:
     needs: [prepare-env]
     name: "Test qcom-distro_linux-qcom-6.18"
-    uses: ./.github/workflows/test-distro.yml
-    secrets: inherit
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
+    secrets:
+      LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
       build_id: "${{ inputs.build_id }}"
       devices: "uno-q,ventuno-q"
