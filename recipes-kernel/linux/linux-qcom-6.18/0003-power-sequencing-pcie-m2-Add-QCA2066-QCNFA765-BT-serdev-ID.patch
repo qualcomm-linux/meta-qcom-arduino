@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Thu, 2 Jul 2026 12:46:14 +0200
+Subject: [PATCH] power: sequencing: pcie-m2: Add QCA2066
+ (QCNFA765) BT serdev ID
+
+Add PCI IDs for Qualcomm QCA2066/QCNFA765 to the M.2 serdev ID table,
+mapping it to the qcom,qca2066-bt compatible string.
+
+The Subsystem Vendor ID (SVID) 0x0108 distinguishes the QCA2066 from
+the WCN6855.
+
+This allows the pwrseq-pcie-m2 driver to automatically create the
+Bluetooth serdev device when a QCA2066-based M.2 card is enumerated.
+
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Link: https://patch.msgid.link/20260702-monza-wireless-v2-2-7b56e2a6a6d4@oss.qualcomm.com
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+(cherry picked from commit 1656f4f2eb45d9f18515ac00657a2494719fa065)
+[rsalveti: context-only conflict; the NXP 88W8987 entries that precede the
+ new one upstream are not on this branch]
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Backport [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1656f4f2eb45d9f18515ac00657a2494719fa065]
+---
+ drivers/power/sequencing/pwrseq-pcie-m2.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/power/sequencing/pwrseq-pcie-m2.c b/drivers/power/sequencing/pwrseq-pcie-m2.c
+index 89fd68392c55..0defc5e74d83 100644
+--- a/drivers/power/sequencing/pwrseq-pcie-m2.c
++++ b/drivers/power/sequencing/pwrseq-pcie-m2.c
+@@ -186,6 +186,8 @@ static int pwrseq_pcie_m2_match(struct pwrseq_device *pwrseq,
+ }
+ 
+ static const struct pci_device_id pwrseq_m2_pci_ids[] = {
++	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_QCOM, 0x1103, PCI_VENDOR_ID_QCOM, 0x0108),
++	  .driver_data = (kernel_ulong_t)"qcom,qca2066-bt" },
+ 	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_QCOM, 0x1103, PCI_VENDOR_ID_FOXCONN, 0xe105),
+ 	  .driver_data = (kernel_ulong_t)"qcom,wcn6855-bt" },
+ 	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_QCOM, 0x1103, PCI_VENDOR_ID_QCOM, 0x337e),
