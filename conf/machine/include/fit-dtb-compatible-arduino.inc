@@ -13,4 +13,4 @@
 # match the configurations in qcom-dtb-metadata's qcom-next-fitimage.its.
 
 # ---------- ventuno-q (monza) ----------
-FIT_DTB_COMPATIBLE[qcom_qcs8275-iot-subtype4] = "monaco-arduino-monza"
+FIT_DTB_COMPATIBLE[qcom_qcs8275-iot-subtype4] = "monaco-arduino-monza monaco-el2"
