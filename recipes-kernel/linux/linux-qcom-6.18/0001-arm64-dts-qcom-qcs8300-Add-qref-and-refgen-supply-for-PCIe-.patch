@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ziyue Zhang <ziyue.zhang@oss.qualcomm.com>
+Date: Wed, 16 Sep 2026 18:20:22 +0800
+Subject: [PATCH] arm64: dts: qcom: qcs8300: Add qref and
+ refgen supply for PCIe PHYs
+
+The QMP PCIe PHYs on QCS8300 require dedicated qref and refgen voltage
+supplies for stable operation. Without these supplies, the system may
+occasionally crash.
+
+Add vdda-qref-supply and vdda-refgen-supply in the board files
+(QCS8300-RIDE, Monaco-EVK and Monaco-Monza-SoM), and add refgen-supply
+in the SoC DTSI (monaco.dtsi) since refgen is an on-chip regulator
+shared across boards. The PHY driver votes for refgen3 directly as a
+workaround for a hardware issue where QREF actually depends on refgen3
+rather than refgen2 as documented.
+
+Fixes: 33967eadb215 ("arm64: dts: qcom: qcs8300-ride: enable pcie0 interface")
+Fixes: cdb613a84527 ("arm64: dts: qcom: qcs8300-ride: enable pcie1 interface")
+Fixes: 41e2424651f7 ("arm64: dts: qcom: monaco-evk: Enable PCIe0 and PCIe1.")
+Fixes: 5238f4e7169f ("arm64: dts: qcom: Add Monaco Monza SoM")
+Link: https://lore.kernel.org/r/20260916102023.2054761-4-ziyue.zhang@oss.qualcomm.com
+Signed-off-by: Ziyue Zhang <ziyue.zhang@oss.qualcomm.com>
+[rsalveti: monaco-monza-som.dtsi hunk only. The qcs8300-ride, monaco-evk and
+ monaco.dtsi parts are already on this branch from v1 of this patch
+ (7f89e2cbdc0d), which predates the Monza SoM. Without these supplies the
+ DSI PHY is the only L4A consumer on VENTUNO Q, and the DSI PLL and, after
+ it, the SGMII SerDes intermittently fail to lock at boot]
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://lore.kernel.org/r/20260916102023.2054761-4-ziyue.zhang@oss.qualcomm.com]
+---
+ arch/arm64/boot/dts/qcom/monaco-monza-som.dtsi | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/monaco-monza-som.dtsi b/arch/arm64/boot/dts/qcom/monaco-monza-som.dtsi
+index 9b5ed55939b8..7012ed5e1232 100644
+--- a/arch/arm64/boot/dts/qcom/monaco-monza-som.dtsi
++++ b/arch/arm64/boot/dts/qcom/monaco-monza-som.dtsi
+@@ -211,6 +211,8 @@ &pcie0 {
+ &pcie0_phy {
+ 	vdda-phy-supply = <&vreg_l6a>;
+ 	vdda-pll-supply = <&vreg_l5a>;
++	vdda-qref-supply = <&vreg_l4a>;
++	vdda-refgen-supply = <&vreg_l7a>;
+ 
+ 	status = "okay";
+ };
+@@ -223,6 +225,8 @@ &pcie1 {
+ &pcie1_phy {
+ 	vdda-phy-supply = <&vreg_l6a>;
+ 	vdda-pll-supply = <&vreg_l5a>;
++	vdda-qref-supply = <&vreg_l4a>;
++	vdda-refgen-supply = <&vreg_l7a>;
+ 
+ 	status = "okay";
+ };
