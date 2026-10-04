@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 4 Sep 2026 17:42:25 +0200
+Subject: [PATCH] dt-bindings: connector: pcie-m2-e: Add vendor
+ LGA connector compatible
+
+Some modules (e.g. the Qualcomm QCA2066/QCNFA765) expose the same M.2
+Key E interface signals but are physically soldered as an LGA package
+rather than plugged into a real M.2 Key E connector socket. Such designs
+are not actual M.2 Key E connectors, so describe them with a dedicated
+vendor-specific compatible while keeping "pcie-m2-e-connector" as a
+fallback for the shared signal semantics.
+
+Add "qcom,pcie-m2-1418-lga-connector" for the M.2 LGA 1418 found on
+Arduino Ventuno Q (Monaco Monza).
+
+Add "qcom,pcie-m2-1620-lga-connector" for the M.2 LGA 1620 found on
+The Lenovo Thinkpad T14s.
+
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260904-monza-wireless-v6-10-d8c5042b3efd@oss.qualcomm.com
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://lore.kernel.org/r/20260904-monza-wireless-v6-10-d8c5042b3efd@oss.qualcomm.com]
+---
+ .../bindings/connector/pcie-m2-e-connector.yaml           | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/connector/pcie-m2-e-connector.yaml b/Documentation/devicetree/bindings/connector/pcie-m2-e-connector.yaml
+index f7859aa9b634..ce6173a0ec41 100644
+--- a/Documentation/devicetree/bindings/connector/pcie-m2-e-connector.yaml
++++ b/Documentation/devicetree/bindings/connector/pcie-m2-e-connector.yaml
+@@ -17,7 +17,13 @@ description:
+ 
+ properties:
+   compatible:
+-    const: pcie-m2-e-connector
++    oneOf:
++      - const: pcie-m2-e-connector
++      - items:
++          - enum:
++              - qcom,pcie-m2-1418-lga-connector
++              - qcom,pcie-m2-1620-lga-connector
++          - const: pcie-m2-e-connector
+ 
+   vpcie3v3-supply:
+     description: A phandle to the regulator for 3.3v supply.
