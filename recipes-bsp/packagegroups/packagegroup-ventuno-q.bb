@@ -32,6 +32,7 @@ RRECOMMENDS:${PN}-kernel-modules = " \
     kernel-module-ina2xx \
     kernel-module-pinctrl-lpass-lpi \
     kernel-module-pinctrl-sm8450-lpass-lpi \
+    kernel-module-pwrseq-pcie-m2 \
     kernel-module-qca808x \
     kernel-module-snd-soc-max98090 \
     kernel-module-ucsi-ccg \
