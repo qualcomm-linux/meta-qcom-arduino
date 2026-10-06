@@ -21,17 +21,17 @@ on:
 env:
   # git sha, tag or branch in lava-test-plans repository. Must include the
   # project named in LAVA_TEST_PLANS_PROJECT.
-  LAVA_TEST_PLANS_REF: "95c77fdf4c202ccbfd50c2d449760ebb151287a0"
+  LAVA_TEST_PLANS_REF: "a64f1c400dec9569dfa9d920ba28162ca91cf9e6"
   # Project in lava-test-plans carrying the device templates and test plans
   # for the Arduino boards. They were added under the meta-qcom-3rdparty
   # project (lava-test-plans 773df66) when the boards lived in that layer;
   # switch to a meta-qcom-arduino project and bump LAVA_TEST_PLANS_REF once it
   # exists upstream.
-  LAVA_TEST_PLANS_PROJECT: "meta-qcom-3rdparty"
+  LAVA_TEST_PLANS_PROJECT: "meta-qcom-arduino"
   # CalVer tag in qcom-linux-testkit repository (format: testkit-YYYY.MM.DD).
   # Only boot test plans run here, so no test definition is pulled from it yet;
   # kept in sync with meta-qcom so the pin is meaningful once tests are added.
-  TESTKIT_REF: "testkit-2026.07.19"
+  TESTKIT_REF: "testkit-2026.09.27"
 
 jobs:
   prepare-env:
@@ -70,6 +70,7 @@ jobs:
     with:
       build_id: "${{ inputs.build_id }}"
       devices: "uno-q,ventuno-q"
+      devices_premerge: "ventuno-q"
       project_name: "${{ needs.prepare-env.outputs.lava-test-plans-project }}"
       distro_name: "qcom-distro"
       lava_test_plans_ref: "${{ needs.prepare-env.outputs.lava-test-plans-ref }}"
