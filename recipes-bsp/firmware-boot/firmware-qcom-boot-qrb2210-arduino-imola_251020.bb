@@ -1,6 +1,6 @@
 SUMMARY = "Prebuilt bootloader images for Arduino UNO Q"
 
-LICENSE = "LICENSE.qcom"
+LICENSE = "LicenseRef-LICENSE.qcom"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=cbbe399f2c983ad51768f4561587f000"
 
 SRC_URI = "https://downloads.arduino.cc/debian-im/unoq-bootloader-emmc-linux-${PV}.zip"
