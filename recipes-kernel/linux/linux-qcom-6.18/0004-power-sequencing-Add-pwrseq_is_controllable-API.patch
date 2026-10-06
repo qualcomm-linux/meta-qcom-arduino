@@ -1,0 +1,187 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 4 Sep 2026 17:42:18 +0200
+Subject: [PATCH] power: sequencing: Add
+ pwrseq_is_controllable() API
+
+On some boards a power sequencing target has no host-controllable enable
+for its function, for instance when the enable line is not wired up to a
+GPIO and is hardwired to an always-on level. The pcie-m2 "uart" target is
+one such example: when the M.2 connector does not route the W_DISABLE2#
+signal to a host GPIO, its enable/disable are no-ops and the consumer
+cannot gate the Bluetooth function at all or exclusively.
+
+Add a generic pwrseq_is_controllable() helper. It reports whether the
+target's final unit provides a host-controllable dedicated power actuator.
+The target can implement a new optional is_controllable() callback,
+reporting whether that actuator is effective on this target (for example
+depending on GPIO presence). If the target does not provide the callback,
+it is assumed to be controllable.
+
+Note this only describes the target's own enable actuator. It does not
+imply that a power-off reaches an electrical OFF state, since a target may
+have multiple consumers. It also does not mean that power is uncontrolled
+for the target's dependencies: those may still be gated on their own. And
+it does not restrict consumers from calling pwrseq_power_off() either,
+which remains valid to drop this consumer's vote on the (possibly shared)
+resources and dependencies of the target.
+
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Acked-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Link: https://patch.msgid.link/20260904-monza-wireless-v6-3-d8c5042b3efd@oss.qualcomm.com
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+(cherry picked from commit bf544a7a60e9eb45f3e22bd1a5184ccc16d75cc8)
+
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Backport [https://git.kernel.org/brgl/c/bf544a7a60e9eb45f3e22bd1a5184ccc16d75cc8]
+---
+ drivers/power/sequencing/core.c | 49 +++++++++++++++++++++++++++++++++
+ include/linux/pwrseq/consumer.h |  7 +++++
+ include/linux/pwrseq/provider.h |  8 ++++++
+ 3 files changed, 64 insertions(+)
+
+diff --git a/drivers/power/sequencing/core.c b/drivers/power/sequencing/core.c
+index ca86fe3d8eeb..0730c5c33775 100644
+--- a/drivers/power/sequencing/core.c
++++ b/drivers/power/sequencing/core.c
+@@ -182,12 +182,15 @@ static void pwrseq_unit_release(struct kref *ref)
+  *               the state lock has been released. It's useful for implementing
+  *               boot-up delays without blocking other users from powering up
+  *               using the same power sequencer.
++ * @is_controllable: Optional callback reporting whether enabling/disabling
++ *                   this target actually controls power.
+  */
+ struct pwrseq_target {
+ 	struct list_head list;
+ 	const char *name;
+ 	struct pwrseq_unit *unit;
+ 	pwrseq_power_state_func post_enable;
++	pwrseq_is_controllable_func is_controllable;
+ };
+ 
+ static struct pwrseq_target *
+@@ -206,6 +209,7 @@ pwrseq_target_new(const struct pwrseq_target_data *data)
+ 	}
+ 
+ 	target->post_enable = data->post_enable;
++	target->is_controllable = data->is_controllable;
+ 
+ 	return target;
+ }
+@@ -978,6 +982,51 @@ struct device *pwrseq_to_device(struct pwrseq_desc *desc)
+ }
+ EXPORT_SYMBOL_GPL(pwrseq_to_device);
+ 
++/**
++ * pwrseq_is_controllable() - Check whether the target provides a
++ *                            host-controllable power actuator.
++ * @desc: Descriptor referencing the power sequencer.
++ *
++ * Some power sequencing targets provide no host-controllable enable for their
++ * function on a given board, for instance when the enable line is not wired up
++ * and is instead hardwired to an always-on level. For such targets a call to
++ * pwrseq_power_off() is still allowed, so that the consumer can drop its vote
++ * on the (possibly shared) resources, but the host cannot gate the function
++ * on its own.
++ *
++ * Returns:
++ * True if the target provides a host-controllable power actuator, false
++ * otherwise. Also returns false if @desc is NULL.
++ */
++bool pwrseq_is_controllable(struct pwrseq_desc *desc)
++{
++	struct pwrseq_device *pwrseq;
++	struct pwrseq_target *target;
++	struct pwrseq_unit *unit;
++
++	might_sleep();
++
++	if (!desc)
++		return false;
++
++	pwrseq = desc->pwrseq;
++	target = desc->target;
++	unit = target->unit;
++
++	guard(rwsem_read)(&pwrseq->rw_lock);
++	if (!device_is_registered(&pwrseq->dev))
++		return false;
++
++	if (!unit->enable && !unit->disable)
++		return false;
++
++	if (!target->is_controllable)
++		return true;
++
++	return target->is_controllable(pwrseq);
++}
++EXPORT_SYMBOL_GPL(pwrseq_is_controllable);
++
+ #if IS_ENABLED(CONFIG_DEBUG_FS)
+ 
+ struct pwrseq_debugfs_count_ctx {
+diff --git a/include/linux/pwrseq/consumer.h b/include/linux/pwrseq/consumer.h
+index 3c907c9e1885..f70f694c19ab 100644
+--- a/include/linux/pwrseq/consumer.h
++++ b/include/linux/pwrseq/consumer.h
+@@ -25,6 +25,8 @@ int pwrseq_power_off(struct pwrseq_desc *desc);
+ 
+ struct device *pwrseq_to_device(struct pwrseq_desc *desc);
+ 
++bool pwrseq_is_controllable(struct pwrseq_desc *desc);
++
+ #else /* CONFIG_POWER_SEQUENCING */
+ 
+ static inline struct pwrseq_desc * __must_check
+@@ -58,6 +60,11 @@ static inline struct device *pwrseq_to_device(struct pwrseq_desc *desc)
+ 	return NULL;
+ }
+ 
++static inline bool pwrseq_is_controllable(struct pwrseq_desc *desc)
++{
++	return false;
++}
++
+ #endif /* CONFIG_POWER_SEQUENCING */
+ 
+ #endif /* __POWER_SEQUENCING_CONSUMER_H__ */
+diff --git a/include/linux/pwrseq/provider.h b/include/linux/pwrseq/provider.h
+index 33b3d2c2e39d..7285ad94a221 100644
+--- a/include/linux/pwrseq/provider.h
++++ b/include/linux/pwrseq/provider.h
+@@ -6,12 +6,15 @@
+ #ifndef __POWER_SEQUENCING_PROVIDER_H__
+ #define __POWER_SEQUENCING_PROVIDER_H__
+ 
++#include <linux/types.h>
++
+ struct device;
+ struct module;
+ struct pwrseq_device;
+ 
+ typedef int (*pwrseq_power_state_func)(struct pwrseq_device *);
+ typedef int (*pwrseq_match_func)(struct pwrseq_device *, struct device *);
++typedef bool (*pwrseq_is_controllable_func)(struct pwrseq_device *);
+ 
+ #define PWRSEQ_NO_MATCH 0
+ #define PWRSEQ_MATCH_OK 1
+@@ -43,11 +46,16 @@ struct pwrseq_unit_data {
+  *               the state lock has been released. It's useful for implementing
+  *               boot-up delays without blocking other users from powering up
+  *               using the same power sequencer.
++ * @is_controllable: Optional callback checking whether enabling/disabling this
++ *                   target actually controls power (for example when the
++ *                   controlling GPIO is wired up). If not provided, the
++ *                   target's power is assumed to be always controllable.
+  */
+ struct pwrseq_target_data {
+ 	const char *name;
+ 	const struct pwrseq_unit_data *unit;
+ 	pwrseq_power_state_func post_enable;
++	pwrseq_is_controllable_func is_controllable;
+ };
+ 
+ /**

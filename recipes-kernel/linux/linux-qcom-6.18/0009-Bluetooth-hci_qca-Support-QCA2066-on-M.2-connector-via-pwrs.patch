@@ -1,0 +1,110 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 4 Sep 2026 17:42:23 +0200
+Subject: [PATCH] Bluetooth: hci_qca: Support QCA2066 on M.2
+ connector via pwrseq
+
+For QCA2066 (and other QCA chips) on M.2 connectors, the UART enable is
+controlled by the W_DISABLE2# signal managed by the pcie-m2 power sequencer
+rather than a dedicated BT enable GPIO.
+
+When the serdev controller has an OF graph (indicating it is connected to
+an M.2 connector), acquire the 'uart' pwrseq target from the connector's
+power sequencer and use it to control BT power instead of the bt-enable
+GPIO. This is factored out into qca_serdev_get_m2_pwrseq().
+
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Reviewed-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260904-monza-wireless-v6-8-d8c5042b3efd@oss.qualcomm.com
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+[rsalveti: use pwrseq_power_on() as pwrseq_enable() is not on this branch; the M.2
+ check sits in a SoC switch that also lists QCC2072 and orders WCN6750
+ last here]
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://lore.kernel.org/r/20260904-monza-wireless-v6-8-d8c5042b3efd@oss.qualcomm.com]
+---
+ drivers/bluetooth/hci_qca.c | 47 +++++++++++++++++++++++++++++--------
+ 1 file changed, 37 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 35fa253a80bb..d89615caa128 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -1878,6 +1878,9 @@ static int qca_power_on(struct hci_dev *hdev)
+ 			/* Controller needs time to bootup. */
+ 			msleep(150);
+ 		}
++
++		if (qcadev->bt_power.pwrseq)
++			pwrseq_power_on(qcadev->bt_power.pwrseq);
+ 	}
+ 
+ 	clear_bit(QCA_BT_OFF, &qca->flags);
+@@ -2403,6 +2406,34 @@ static int qca_init_regulators(struct qca_power *qca,
+ 	return 0;
+ }
+ 
++static void qca_serdev_put_pwrseq(void *data)
++{
++	pwrseq_put(data);
++}
++
++static int qca_serdev_get_m2_pwrseq(struct qca_serdev *qcadev)
++{
++	struct serdev_device *serdev = qcadev->serdev_hu.serdev;
++	struct pwrseq_desc *pwrseq;
++
++	if (!of_graph_is_present(dev_of_node(&serdev->ctrl->dev)))
++		return 0;
++
++	/* The pwrseq is looked up on the serdev controller (which holds the
++	 * OF graph to the M.2 connector), but its lifetime must follow this
++	 * serdev consumer device, not the controller. So acquire it with the
++	 * non-devres pwrseq_get() and release it via a devres action bound to
++	 * &serdev->dev instead of using devm_pwrseq_get(&serdev->ctrl->dev).
++	 */
++	pwrseq = pwrseq_get(&serdev->ctrl->dev, "uart");
++	if (IS_ERR(pwrseq))
++		return PTR_ERR(pwrseq);
++
++	qcadev->bt_power.pwrseq = pwrseq;
++
++	return devm_add_action_or_reset(&serdev->dev, qca_serdev_put_pwrseq, pwrseq);
++}
++
+ static int qca_serdev_probe(struct serdev_device *serdev)
+ {
+ 	struct qca_serdev *qcadev;
+@@ -2433,6 +2464,10 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 	else
+ 		qcadev->btsoc_type = QCA_ROME;
+ 
++	err = qca_serdev_get_m2_pwrseq(qcadev);
++	if (err)
++		return err;
++
+ 	switch (qcadev->btsoc_type) {
+ 	case QCA_QCC2072:
+ 	case QCA_WCN3950:
+@@ -2443,17 +2478,9 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_WCN6750:
+-		/*
+-		 * OF graph link is only present for BT devices attached through
+-		 * the M.2 Key E connector.
+-		 */
+-		if (of_graph_is_present(dev_of_node(&serdev->ctrl->dev))) {
+-			qcadev->bt_power.pwrseq = devm_pwrseq_get(&serdev->ctrl->dev,
+-								  "uart");
+-			if (IS_ERR(qcadev->bt_power.pwrseq))
+-				return PTR_ERR(qcadev->bt_power.pwrseq);
++		/* M.2 connector modules are powered by the pwrseq acquired above. */
++		if (qcadev->bt_power.pwrseq)
+ 			break;
+-		}
+ 
+ 		if (!device_property_present(&serdev->dev, "enable-gpios")) {
+ 			/*

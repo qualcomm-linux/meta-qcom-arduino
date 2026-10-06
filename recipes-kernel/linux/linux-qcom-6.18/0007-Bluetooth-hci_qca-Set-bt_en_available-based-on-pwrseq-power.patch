@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 4 Sep 2026 17:42:21 +0200
+Subject: [PATCH] Bluetooth: hci_qca: Set 'bt_en_available'
+ based on pwrseq power controllability
+
+A Bluetooth device only needs the non-persistent setup if the host can
+gate its power, so that it is actually reset on the next power-on. When the
+power is controlled by a power sequencer, whether the host can gate it
+depends on the hardware wiring, e.g. the presence of the BT_EN or
+W_DISABLE2# line.
+
+Query the generic pwrseq_is_controllable() helper whenever the BT power
+comes from a sequencer, regardless of which provider it is (M2, WCN, ...).
+If the power is not controllable, clear 'bt_en_available' so that
+HCI_QUIRK_NON_PERSISTENT_SETUP is not set.
+
+This is based on Manivannan's original patch that keyed the decision off
+the W_DISABLE2# device tree property, it now uses the generic pwrseq helper
+and handles the always-on case.
+
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/20260904-monza-wireless-v6-6-d8c5042b3efd@oss.qualcomm.com
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://lore.kernel.org/r/20260904-monza-wireless-v6-6-d8c5042b3efd@oss.qualcomm.com]
+---
+ drivers/bluetooth/hci_qca.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index ec0a6d9bf72e..562218dfab68 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -2568,7 +2568,20 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 			return PTR_ERR(qcadev->susclk);
+ 		}
+ 	}
+-	
++
++	if (qcadev->bt_power->pwrseq) {
++		bt_en_available = pwrseq_is_controllable(qcadev->bt_power->pwrseq);
++		if (!bt_en_available) {
++			/* The host cannot gate the BT power individually.
++			 * Treat it as always-on and drop the pwrseq handle.
++			 * The descriptor itself is still released by devres,
++			 * so dropping the handle here is not a leak.
++			 */
++			pwrseq_power_on(qcadev->bt_power->pwrseq);
++			qcadev->bt_power->pwrseq = NULL;
++		}
++	}
++
+ 	err = hci_uart_register_device(&qcadev->serdev_hu, &qca_proto);
+ 	if (err) {
+ 		BT_ERR("serdev registration failed");

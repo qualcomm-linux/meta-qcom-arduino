@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+Date: Sat, 3 Oct 2026 23:29:22 -0300
+Subject: [PATCH] Revert "FROMLIST: Bluetooth: hci_qca: Set
+ 'bt_en_available' based on W_DISABLE2# presence in M.2 connector"
+
+This reverts commit 5b9e84dd13df3aa34a59235033b434efb5b675a1.
+
+This was taken from an early posting of the M.2 Bluetooth pwrseq series,
+where the decision was keyed off the presence of the w-disable2-gpios
+property on the connector. Since v3 of the monza-wireless series that patch
+was replaced by "Bluetooth: hci_qca: Set 'bt_en_available' based on pwrseq
+power controllability", which uses the generic pwrseq_is_controllable() API
+and also covers providers other than the M.2 connector. Revert the old
+version so the upstream replacement can be applied as posted.
+
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Inappropriate [qcom-6.18.y specific: reverts an early version of a patch carried by that branch, superseded by the pwrseq controllability rework]
+---
+ drivers/bluetooth/hci_qca.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 086604ca2b48..ec0a6d9bf72e 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -2469,17 +2469,10 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 		 * the M.2 Key E connector.
+ 		 */
+ 		if (of_graph_is_present(dev_of_node(&serdev->ctrl->dev))) {
+-			struct device *dev;
+-
+ 			qcadev->bt_power->pwrseq = devm_pwrseq_get(&serdev->ctrl->dev,
+ 								   "uart");
+ 			if (IS_ERR(qcadev->bt_power->pwrseq))
+ 				return PTR_ERR(qcadev->bt_power->pwrseq);
+-
+-			dev = pwrseq_to_device(qcadev->bt_power->pwrseq);
+-			if (!device_property_present(dev, "w-disable2-gpios"))
+-				bt_en_available = false;
+-
+ 			break;
+ 		}
+ 
