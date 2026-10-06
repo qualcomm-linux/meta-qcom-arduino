@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ */
+
+/* linux-arduino splits the board DT into a base DTS and overlays */
+#if __has_include("qrb2210-arduino-imola-base.dts")
+#include "qrb2210-arduino-imola-base.dts"
+#else
+#include "qrb2210-arduino-imola.dts"
+#endif
+
+&usb_dwc3 {
+	dr_mode = "host";
+	/delete-property/ usb-role-switch;
+};
