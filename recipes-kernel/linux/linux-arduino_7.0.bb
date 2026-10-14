@@ -19,6 +19,8 @@ SRC_URI = "\
     file://configs/arduino.cfg \
 "
 
+SRC_URI:append:uno-q = " file://configs/uno-q.cfg"
+
 S = "${UNPACKDIR}/${BP}"
 
 KBUILD_DEFCONFIG ?= "defconfig"
