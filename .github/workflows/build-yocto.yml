@@ -189,6 +189,50 @@ jobs:
                 type: qcom-next
                 dirname: "_linux-qcom-next"
                 yamlfile: ":ci/linux-qcom-next.yml"
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro-catchall
+                yamlfile: ':ci/qcom-distro-catchall.yml'
+
+          - machine: ventuno-q
+            distro:
+                name: debug
+                yamlfile: ':ci/qcom-distro-catchall.yml:ci/debug.yml:ci/nospdx.yml'
+                profile: weekly
+
+          - machine: ventuno-q
+            distro:
+                name: performance
+                yamlfile: ':ci/qcom-distro-catchall.yml:ci/performance.yml:ci/nospdx.yml'
+                profile: full
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro-kvm
+                yamlfile: ':ci/qcom-distro-kvm.yml'
+            kernel:
+                type: default
+                dirname: ""
+                yamlfile: ""
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: rt-6.18-distro-kvm
+                dirname: "_linux-qcom-rt-6.18_qcom-distro-kvm"
+                yamlfile: ":ci/linux-qcom-rt-6.18.yml:ci/qcom-distro-kvm.yml"
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: qcom-next-rt
+                dirname: "_linux-qcom-next-rt"
+                yamlfile: ":ci/linux-qcom-next-rt.yml"
     uses: qualcomm-linux/meta-qcom/.github/workflows/compile.yml@master
     with:
       name: ${{ matrix.machine }}/${{ matrix.distro.name }}${{ matrix.kernel.dirname }}
