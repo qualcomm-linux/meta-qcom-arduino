@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Date: Fri, 4 Sep 2026 17:42:19 +0200
+Subject: [PATCH] power: sequencing: pcie-m2: Report power
+ controllability
+
+The M.2 Key E connector gates/resets its functions through the
+W_DISABLE1# (PCIe/WiFi) and W_DISABLE2# (Bluetooth) signals.
+When a signal is not routed to a host GPIO, the corresponding
+enable/disable callbacks are no-ops, so the consumer cannot gate
+or reset that function on its own.
+
+Implement the .is_controllable() callback on the "uart" and "pcie"
+targets so that consumers can query this per instance (based on the
+runtime presence of the W_DISABLE2#/W_DISABLE1# GPIOs) via
+pwrseq_is_controllable().
+
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Reviewed-by: Manivannan Sadhasivam <mani@kernel.org>
+Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
+Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+Link: https://patch.msgid.link/20260904-monza-wireless-v6-4-d8c5042b3efd@oss.qualcomm.com
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
+(cherry picked from commit 48925a1d5e569735031bcc2f2c19e6ce7a38e424)
+
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Backport [https://git.kernel.org/brgl/c/48925a1d5e569735031bcc2f2c19e6ce7a38e424]
+---
+ drivers/power/sequencing/pwrseq-pcie-m2.c | 26 +++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/drivers/power/sequencing/pwrseq-pcie-m2.c b/drivers/power/sequencing/pwrseq-pcie-m2.c
+index 0defc5e74d83..9dcf8de6f533 100644
+--- a/drivers/power/sequencing/pwrseq-pcie-m2.c
++++ b/drivers/power/sequencing/pwrseq-pcie-m2.c
+@@ -84,6 +84,18 @@ static int pwrseq_pci_m2_e_uart_disable(struct pwrseq_device *pwrseq)
+ 	return gpiod_set_value_cansleep(ctx->w_disable2_gpio, 1);
+ }
+ 
++static bool pwrseq_pci_m2_e_uart_is_controllable(struct pwrseq_device *pwrseq)
++{
++	struct pwrseq_pcie_m2_ctx *ctx = pwrseq_device_get_drvdata(pwrseq);
++
++	/*
++	 * The UART enable is driven through the W_DISABLE2# line. When it is not
++	 * wired up on this connector the enable/disable callbacks are no-ops, so
++	 * the host cannot gate the Bluetooth function on its own.
++	 */
++	return !!ctx->w_disable2_gpio;
++}
++
+ static const struct pwrseq_unit_data pwrseq_pcie_m2_e_uart_unit_data = {
+ 	.name = "uart-enable",
+ 	.deps = pwrseq_pcie_m2_unit_deps,
+@@ -105,6 +117,18 @@ static int pwrseq_pci_m2_e_pcie_disable(struct pwrseq_device *pwrseq)
+ 	return gpiod_set_value_cansleep(ctx->w_disable1_gpio, 1);
+ }
+ 
++static bool pwrseq_pci_m2_e_pcie_is_controllable(struct pwrseq_device *pwrseq)
++{
++	struct pwrseq_pcie_m2_ctx *ctx = pwrseq_device_get_drvdata(pwrseq);
++
++	/*
++	 * The PCIe/WiFi enable is driven through the W_DISABLE1# line. When it
++	 * is not wired up on this connector the enable/disable callbacks are
++	 * no-ops, so the host cannot gate the PCIe/WiFi function on its own.
++	 */
++	return !!ctx->w_disable1_gpio;
++}
++
+ static const struct pwrseq_unit_data pwrseq_pcie_m2_e_pcie_unit_data = {
+ 	.name = "pcie-enable",
+ 	.deps = pwrseq_pcie_m2_unit_deps,
+@@ -133,12 +157,14 @@ static const struct pwrseq_target_data pwrseq_pcie_m2_e_uart_target_data = {
+ 	.name = "uart",
+ 	.unit = &pwrseq_pcie_m2_e_uart_unit_data,
+ 	.post_enable = pwrseq_pcie_m2_e_pwup_delay,
++	.is_controllable = pwrseq_pci_m2_e_uart_is_controllable,
+ };
+ 
+ static const struct pwrseq_target_data pwrseq_pcie_m2_e_pcie_target_data = {
+ 	.name = "pcie",
+ 	.unit = &pwrseq_pcie_m2_e_pcie_unit_data,
+ 	.post_enable = pwrseq_pcie_m2_e_pwup_delay,
++	.is_controllable = pwrseq_pci_m2_e_pcie_is_controllable,
+ };
+ 
+ static const struct pwrseq_target_data pwrseq_pcie_m2_m_pcie_target_data = {
