@@ -14,3 +14,4 @@
 
 # ---------- ventuno-q (monza) ----------
 FIT_DTB_COMPATIBLE[qcom_qcs8275-iot-subtype4] = "monaco-arduino-monza monaco-el2"
+FIT_DTB_COMPATIBLE[qcom_qcs8275-iot-subtype4-camx] = "monaco-arduino-monza monaco-arduino-monza-camx monaco-el2 monaco-arduino-monza-camx-el2"
