@@ -1,0 +1,16 @@
+# Known failures for qcom-distro, see README.md for the format.
+
+monaco-arduino-monza:
+  # the alsa-ucm-conf arduino-monza Headset EnableSequence sets the missing
+  # "Headset Mic Switch" control and aborts before the ADC mixer is set, so
+  # the capture is all zeros (digital-silence-all-zero)
+  - test: AudioRecord_Config01
+    comment: arduino-monza UCM Headset capture records silence
+  - test: AudioRecord_Config03
+    comment: arduino-monza UCM Headset capture records silence
+  - test: AudioRecord_Config05
+    comment: arduino-monza UCM Headset capture records silence
+  - test: AudioRecord_Config07
+    comment: arduino-monza UCM Headset capture records silence
+  - test: AudioRecord_Config09
+    comment: arduino-monza UCM Headset capture records silence
