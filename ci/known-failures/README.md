@@ -29,3 +29,6 @@ the listed kernel flavours, as passed in `kernel` by `test.yml`: `default`
 for the run with the machine default kernel (`linux-qcom-next` on
 ventuno-q, `linux-arduino` on uno-q) or `linux-qcom-6.18`. Without it the
 entry applies to every kernel.
+
+For pull requests, the list is read from the head of the pull request,
+so a change can add or remove the entries it affects.
