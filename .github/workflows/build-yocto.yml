@@ -187,16 +187,16 @@ jobs:
             dirname: "_linux-qcom-6.18"
             yamlfile: ":ci/linux-qcom-6.18.yml"
         include:
-          # uno-q defaults to linux-arduino, so also build it with
-          # linux-qcom-next, the default kernel of the other machines
+          # Also build qcom-distro with linux-arduino, the Arduino kernel
+          # tree for its boards
           - machine: uno-q
             distro:
                 name: qcom-distro
                 yamlfile: ':ci/qcom-distro.yml'
             kernel:
-                type: qcom-next
-                dirname: "_linux-qcom-next"
-                yamlfile: ":ci/linux-qcom-next.yml"
+                type: arduino
+                dirname: "_linux-arduino"
+                yamlfile: ":ci/linux-arduino.yml"
 
           # Also build qcom-distro with linux-qcom-rt-6.18 and
           # linux-qcom-next-rt variants to validate RT support
