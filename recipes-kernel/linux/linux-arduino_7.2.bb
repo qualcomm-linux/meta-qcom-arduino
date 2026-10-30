@@ -7,11 +7,12 @@ inherit kernel cml1
 
 COMPATIBLE_MACHINE = "(uno-q)"
 
-LINUX_VERSION ?= "7.0.14"
+LINUX_VERSION ?= "7.2.11"
 
 PV = "${LINUX_VERSION}"
 
-SRCREV ?= "f2e5cd16ede51a1bfaf2d4e179b74c6aaca8e438"
+# branch: qcom-v7.2.11-arduino
+SRCREV ?= "f56a3e0c99c68925a954778910129f3ee6371849"
 SRCBRANCH ?= "nobranch=1"
 
 SRC_URI = "\
