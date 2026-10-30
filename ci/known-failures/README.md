@@ -26,8 +26,9 @@ monaco-arduino-monza:
 `comment` should link the issue the failure is tracked in; it is shown in
 the known failures table of the summary. `kernels` restricts the entry to
 the listed kernel flavours, as passed in `kernel` by `test.yml`: `default`
-for the run with the machine default kernel (`linux-qcom-next`) or
-`linux-qcom-6.18`. Without it the entry applies to every kernel.
+for the run with the machine default kernel (`linux-qcom-next`),
+`linux-qcom-6.18` or `linux-arduino`. Without it the entry applies to
+every kernel.
 
 For pull requests, the list is read from the head of the pull request,
 so a change can add or remove the entries it affects.
