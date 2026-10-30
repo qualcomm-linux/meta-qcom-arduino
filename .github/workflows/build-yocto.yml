@@ -198,6 +198,15 @@ jobs:
                 dirname: "_linux-arduino"
                 yamlfile: ":ci/linux-arduino.yml"
 
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: arduino
+                dirname: "_linux-arduino"
+                yamlfile: ":ci/linux-arduino.yml"
+
           # Also build qcom-distro with linux-qcom-rt-6.18 and
           # linux-qcom-next-rt variants to validate RT support
           - machine: ventuno-q
