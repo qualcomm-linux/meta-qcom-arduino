@@ -89,8 +89,8 @@ export KAS_YAMLS="ci/uno-q.yml"
 export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
-# Build uno-q with the linux-qcom-next kernel instead of linux-arduino
-export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-next.yml"
+# Build with the linux-arduino kernel instead of the machine default
+export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-arduino.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
 # Build with the linux-qcom 6.18 kernel instead of the machine default

@@ -1,0 +1,210 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sneh Mankad <sneh.mankad@oss.qualcomm.com>
+Date: Tue, 27 Oct 2026 18:41:09 +0530
+Subject: [PATCH 6/7] FROMLIST: irqchip: irq-qcom-mpm: Register MPM with cpu_pm
+ for RPM notification
+
+MPM irqchip needs to notify RPM (Resource Power Manager) processor to read
+the latest wake up capable interrupts when the CPU cluster is entering the
+deepest idle state. This is done by sending IPC interrupt to RPM and is
+implemented as .power_off() callback by registering MPM as parent power
+domain to CPU cluster.
+
+Such implementation earlier introduced a hard probe dependency between MPM
+irqchip and CPU cluster power domains. That is MPM irqchip needs to finish
+probe before PSCI power domains are probed.
+
+The above problem has since been resolved after bd7f488a8e5d ("cpuidle:
+psci: Fix support for probe deferral by dropping the faux device") / [1].
+However, it makes sense to remodel the RPM notification in MPM irqchip due
+to general consistency.
+
+MPM is not really a power domain provider, all it needs is a notification
+when CPU cluster is going to power collapse to carry out the RPM
+notification. We can register for CPU_PM notifications for that purpose.
+This way we can avoid such unrelated dependencies.
+
+We cannot register MPM under CPU cluster power domain and rely on
+GENPD notifications here, since that way cluster low power modes will be
+blocked whenever some consumer of MPM, and in turn MPM itself, are
+runtime active. This will add another unnecessary dependency for CPU
+cluster low power modes.
+
+For now as first step, register with cpu_pm as a fallback to manage RPM
+notification. Trigger the RPM notification when the last CPU in CPU cluster
+goes to power collapse.
+
+[1] https://lore.kernel.org/all/20260909134240.685115374@linuxfoundation.org
+
+Signed-off-by: Sneh Mankad <sneh.mankad@oss.qualcomm.com>
+Link: https://lore.kernel.org/all/20261027-b4-shikra_lpm_addition-v3-1-424abcdcf824@oss.qualcomm.com
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://lore.kernel.org/r/20261027-b4-shikra_lpm_addition-v3-1-424abcdcf824@oss.qualcomm.com]
+---
+ drivers/irqchip/irq-qcom-mpm.c | 104 ++++++++++++++++++++++++---------
+ 1 file changed, 78 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/irqchip/irq-qcom-mpm.c b/drivers/irqchip/irq-qcom-mpm.c
+index 8c575d7ce8a1..b6caea90e9f4 100644
+--- a/drivers/irqchip/irq-qcom-mpm.c
++++ b/drivers/irqchip/irq-qcom-mpm.c
+@@ -4,6 +4,7 @@
+  * Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
+  */
+ 
++#include <linux/cpu_pm.h>
+ #include <linux/delay.h>
+ #include <linux/err.h>
+ #include <linux/init.h>
+@@ -85,6 +86,8 @@ struct qcom_mpm_priv {
+ 	unsigned int reg_stride;
+ 	struct irq_domain *domain;
+ 	struct generic_pm_domain genpd;
++	struct notifier_block mpm_pm;
++	atomic_t cpus_in_pm;
+ };
+ 
+ static u32 qcom_mpm_read(struct qcom_mpm_priv *priv, unsigned int reg,
+@@ -292,10 +295,8 @@ static irqreturn_t qcom_mpm_handler(int irq, void *dev_id)
+ 	return ret;
+ }
+ 
+-static int mpm_pd_power_off(struct generic_pm_domain *genpd)
++static int handle_rpm_notification(struct qcom_mpm_priv *priv)
+ {
+-	struct qcom_mpm_priv *priv = container_of(genpd, struct qcom_mpm_priv,
+-						  genpd);
+ 	int i, ret;
+ 
+ 	for (i = 0; i < priv->reg_stride; i++)
+@@ -307,10 +308,52 @@ static int mpm_pd_power_off(struct generic_pm_domain *genpd)
+ 		return ret;
+ 
+ 	mbox_client_txdone(priv->mbox_chan, 0);
+-
+ 	return 0;
+ }
+ 
++static int mpm_pd_power_off(struct generic_pm_domain *genpd)
++{
++	struct qcom_mpm_priv *priv = container_of(genpd, struct qcom_mpm_priv,
++						  genpd);
++
++	return handle_rpm_notification(priv);
++}
++
++static int mpm_cpu_pm_callback(struct notifier_block *nfb, unsigned long action, void *v)
++{
++	struct qcom_mpm_priv *priv = container_of(nfb, struct qcom_mpm_priv, mpm_pm);
++	int cpus_in_pm;
++
++	switch (action) {
++	case CPU_PM_ENTER:
++		cpus_in_pm = atomic_inc_return(&priv->cpus_in_pm);
++		/*
++		 * NOTE: comments for num_online_cpus() point out that it's
++		 * only a snapshot so we need to be careful. It should be OK
++		 * for us to use, though.  It's important for us not to miss
++		 * if we're the last CPU going down so it would only be a
++		 * problem if a CPU went offline right after we did the check
++		 * AND that CPU was not idle AND that CPU was the last non-idle
++		 * CPU. That can't happen. CPUs would have to come out of idle
++		 * before the CPU could go offline.
++		 */
++		if (cpus_in_pm < num_online_cpus())
++			return NOTIFY_OK;
++		break;
++	case CPU_PM_ENTER_FAILED:
++	case CPU_PM_EXIT:
++		atomic_dec(&priv->cpus_in_pm);
++		return NOTIFY_OK;
++	default:
++		return NOTIFY_DONE;
++	}
++
++	if (handle_rpm_notification(priv))
++		return NOTIFY_BAD;
++
++	return NOTIFY_OK;
++}
++
+ static bool gic_hwirq_is_mapped(struct mpm_gic_map *maps, int cnt, u32 hwirq)
+ {
+ 	int i;
+@@ -415,26 +458,6 @@ static int qcom_mpm_probe(struct platform_device *pdev, struct device_node *pare
+ 	if (irq < 0)
+ 		return irq;
+ 
+-	genpd = &priv->genpd;
+-	genpd->flags = GENPD_FLAG_IRQ_SAFE;
+-	genpd->power_off = mpm_pd_power_off;
+-
+-	genpd->name = devm_kasprintf(dev, GFP_KERNEL, "%s", dev_name(dev));
+-	if (!genpd->name)
+-		return -ENOMEM;
+-
+-	ret = pm_genpd_init(genpd, NULL, false);
+-	if (ret) {
+-		dev_err(dev, "failed to init genpd: %d\n", ret);
+-		return ret;
+-	}
+-
+-	ret = of_genpd_add_provider_simple(np, genpd);
+-	if (ret) {
+-		dev_err(dev, "failed to add genpd provider: %d\n", ret);
+-		goto remove_genpd;
+-	}
+-
+ 	priv->mbox_client.dev = dev;
+ 	priv->mbox_client.knows_txdone = true;
+ 	priv->mbox_chan = mbox_request_channel(&priv->mbox_client, 0);
+@@ -444,6 +467,35 @@ static int qcom_mpm_probe(struct platform_device *pdev, struct device_node *pare
+ 		return ret;
+ 	}
+ 
++	if (of_find_property(np, "#power-domain-cells", NULL)) {
++		genpd = &priv->genpd;
++		genpd->flags = GENPD_FLAG_IRQ_SAFE;
++		genpd->power_off = mpm_pd_power_off;
++
++		genpd->name = devm_kasprintf(dev, GFP_KERNEL, "%s", dev_name(dev));
++		if (!genpd->name)
++			return -ENOMEM;
++
++		ret = pm_genpd_init(genpd, NULL, false);
++		if (ret) {
++			dev_err(dev, "failed to init genpd: %d\n", ret);
++			return ret;
++		}
++
++		ret = of_genpd_add_provider_simple(np, genpd);
++		if (ret) {
++			dev_err(dev, "failed to add genpd provider: %d\n", ret);
++			goto remove_genpd;
++		}
++	} else {
++		priv->mpm_pm.notifier_call = mpm_cpu_pm_callback;
++		ret = cpu_pm_register_notifier(&priv->mpm_pm);
++		if (ret) {
++			dev_err(dev, "failed to register for CPU_PM notifications: %d\n", ret);
++			return ret;
++		}
++	}
++
+ 	parent_domain = irq_find_host(parent);
+ 	if (!parent_domain) {
+ 		dev_err(dev, "failed to find MPM parent domain\n");
+@@ -471,10 +523,10 @@ static int qcom_mpm_probe(struct platform_device *pdev, struct device_node *pare
+ 
+ remove_domain:
+ 	irq_domain_remove(priv->domain);
+-free_mbox:
+-	mbox_free_channel(priv->mbox_chan);
+ remove_genpd:
+ 	pm_genpd_remove(genpd);
++free_mbox:
++	mbox_free_channel(priv->mbox_chan);
+ 	return ret;
+ }
+ 

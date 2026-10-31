@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+Date: Sat, 31 Oct 2026 00:33:15 +0000
+Subject: [PATCH 5/7] Revert "FROMLIST: dt-bindings: interrupt-controller: mpm:
+ Document power-domains property"
+
+This reverts commit b3120eabda5403111990b96d2b4a8f546422dbb5.
+
+v3 of the MPM series keeps the existing binding: #power-domain-cells stays
+optional and Shikra simply leaves it out, so the binding change is no
+longer needed. Replacing #power-domain-cells also breaks the DT ABI for
+existing users, which was rejected in the upstream review of v1.
+
+Link: https://github.com/qualcomm-linux/kernel/issues/1371
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://github.com/qualcomm-linux/kernel-topics/pull/2171]
+---
+ .../devicetree/bindings/interrupt-controller/qcom,mpm.yaml  | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/interrupt-controller/qcom,mpm.yaml b/Documentation/devicetree/bindings/interrupt-controller/qcom,mpm.yaml
+index 3f9645fbc3c2..ebb40c48950a 100644
+--- a/Documentation/devicetree/bindings/interrupt-controller/qcom,mpm.yaml
++++ b/Documentation/devicetree/bindings/interrupt-controller/qcom,mpm.yaml
+@@ -68,8 +68,8 @@ properties:
+         - description: MPM pin number
+         - description: GIC SPI number for the MPM pin
+ 
+-  power-domains:
+-    maxItems: 1
++  '#power-domain-cells':
++    const: 0
+ 
+ required:
+   - compatible
+@@ -113,6 +113,6 @@ examples:
+                                <24 79>,
+                                <86 183>,
+                                <91 260>;
+-            power-domains = <&cluster_pd>;
++            #power-domain-cells = <0>;
+         };
+     };

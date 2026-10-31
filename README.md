@@ -34,7 +34,8 @@ revision: HEAD
 ## Branches
 
 - **main:** Primary development branch, with focus on upstream support and
-  compatibility with the most recent Yocto Project release.
+  compatibility with the most recent Yocto Project release, with
+  linux-qcom-next as the default kernel.
 - **wrynose:** LTS branch based on the Yocto Project 6.0 release, used by
   Qualcomm Linux 2.x, with linux-qcom 6.18 as the default kernel.
 
@@ -75,6 +76,14 @@ the `kas-container` wrapper script. For more details, visit the
 
     ```bash
     kas-container build meta-qcom-arduino/ci/uno-q.yml:meta-qcom-arduino/ci/qcom-distro.yml
+    ```
+
+   The boards use the default kernel of meta-qcom for the branch. To build
+   with linux-arduino, the Arduino kernel tree for its boards, instead,
+   append the kernel fragment:
+
+    ```bash
+    kas-container build meta-qcom-arduino/ci/uno-q.yml:meta-qcom-arduino/ci/qcom-distro.yml:meta-qcom-arduino/ci/linux-arduino.yml
     ```
 
 This reuses the same `ci/<machine>.yml` configurations that CI uses. See
