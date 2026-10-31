@@ -1,7 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/linux-qcom-6.18:"
 
 SRC_URI:append:ventuno-q = " \
-    file://0001-arm64-dts-qcom-qcs8300-Add-qref-and-refgen-supply-for-PCIe-.patch \
     file://0002-Revert-FROMLIST-Bluetooth-hci_qca-Set-bt_en_available-based-.patch \
     file://0003-power-sequencing-pcie-m2-Add-QCA2066-QCNFA765-BT-serdev-ID.patch \
     file://0004-power-sequencing-Add-pwrseq_is_controllable-API.patch \
