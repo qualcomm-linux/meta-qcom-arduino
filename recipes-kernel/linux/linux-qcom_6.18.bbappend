@@ -1,1 +1,1 @@
-require linux-qcom-6.18.inc
+require linux-qcom-6.18-arduino.inc
