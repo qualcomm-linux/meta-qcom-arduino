@@ -124,24 +124,23 @@ jobs:
           echo "## Test run [workflow](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})" > pr-comment.txt
           echo "## Test jobs for commit ${GH_EVENT_WORKFLOW_RUN_HEAD_SHA}" >> pr-comment.txt
           PR_NUMBER=$(cat "artifacts/Event File/event.json" | jq -r ".number")
-          for RESULT_FILE_NAME in $(find ./results_summary/ -type f)
-          do
-              # <summary> lines cover both number of tests
-              # and the table with the list of all jobs
-              # omit the list of all jobs from shortened summary
-              cat "${RESULT_FILE_NAME}" | grep "summary" | grep -v "All jobs summary" >> pr-comment.txt
-          done
+          # The test job summary action saves the title and the totals of
+          # each distro in a file of their own
+          find ./results_summary/ -type f -name "*-short.md" | sort | xargs -r cat >> pr-comment.txt
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
-          file-path: pr-comment.txt
-          pr-number: ${{ steps.pr_comment_prep.outputs.pr_number }}
-          # Update a single tagged comment per PR instead of posting a new one on
-          # every run, so the PR shows one current result instead of accumulating
-          # stale comments (one per run / per superseded commit).
-          comment-tag: test-results
+          path: pr-comment.txt
+          number_force: ${{ steps.pr_comment_prep.outputs.pr_number }}
+          # Post a fresh comment on every run (GitHub only notifies on
+          # comment creation) and minimize the previous tagged comment as
+          # outdated instead of deleting it, so the retry history stays
+          # visible (collapsed) in the PR timeline.
+          header: test-results
+          hide_and_recreate: true
+          hide_classify: OUTDATED
 
   publish-test-results:
     if: ${{ !cancelled() && needs.test.result != 'skipped' }}
