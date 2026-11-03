@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+Date: Fri, 9 Oct 2026 10:50:51 +0000
+Subject: [PATCH] ucm2: Arduino Monza: fix headset microphone capture
+
+Capture from the Headset device on the Arduino VENTUNO Q returns only
+silence: its enable sequence aborts before the ADC mixers are set up,
+because the card has no 'Headset Mic Switch' control:
+
+  unable to execute cset 'name='Headset Mic Switch' on'
+
+The qcs8275 sound card only has per-input pin switches for this codec,
+such as 'Headset Mic12' and 'Headset Mic56'.
+
+Dropping that line alone is not enough, as the device feeds the ADC
+mixers from MIC2, which the shared max98090 enable sequence routes to
+IN3/IN4 ('MIC2 Mux' IN34). On the VENTUNO Q those pins are not
+connected. The headset jack of the UNO Media Carrier goes to IN1/IN2
+of the MAX98091 (MIC_IN1_IN2 to JMISC_AUDIO_MIC_IN in the ABX00181
+schematics), which the device already selects with 'MIC1 Mux' IN12 and
+the 'Headset Mic12' pin, matching the IN12 and MICBIAS routes of the
+device tree. With MIC1 left out of every enabled path, DAPM also keeps
+MICBIAS off, so the headset microphone is not biased either.
+
+Drop the non-existent switch and feed the ADC mixers from MIC1.
+
+Tested on the VENTUNO Q with the UNO Media Carrier and a CTIA headset:
+the Headset device enables without errors, MICBIAS is on, and speech
+recorded from it plays back clearly on the Headphones device.
+
+Assisted-by: Claude Code:claude-opus-5-5
+Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
+
+Upstream-Status: Submitted [https://github.com/alsa-project/alsa-ucm-conf/pull/901]
+---
+ ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf b/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
+index 5d2ac0f..55eeb22 100644
+--- a/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
++++ b/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
+@@ -115,20 +115,18 @@ SectionDevice."Headset" {
+ 	EnableSequence [
+ 		cset "name='MIC1 Mux' IN12"
+ 		cset "name='DMIC Mux' 0"
+-		cset "name='Headset Mic Switch' on"
+ 		cset "name='Headset Mic12 Switch' on"
+ 		cset "name='Record Path DC Blocking' on"
+-		cset "name='Left ADC Mixer MIC2 Switch' on"
+-		cset "name='Right ADC Mixer MIC2 Switch' on"
++		cset "name='Left ADC Mixer MIC1 Switch' on"
++		cset "name='Right ADC Mixer MIC1 Switch' on"
+ 	]
+ 
+ 	DisableSequence [
+-		cset "name='Headset Mic Switch' off"
+ 		cset "name='DMIC Mux' 1"
+ 		cset "name='Record Path DC Blocking' off"
+ 		cset "name='Headset Mic12 Switch' off"
+-		cset "name='Left ADC Mixer MIC2 Switch' off"
+-		cset "name='Right ADC Mixer MIC2 Switch' off"
++		cset "name='Left ADC Mixer MIC1 Switch' off"
++		cset "name='Right ADC Mixer MIC1 Switch' off"
+ 	]
+ 
+ 	Value {
