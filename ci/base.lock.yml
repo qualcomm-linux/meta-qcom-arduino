@@ -1,0 +1,8 @@
+header:
+  version: 14
+overrides:
+  repos:
+    meta-qcom:
+      commit: a6c92fad47164e6f051ab5d90567bc92afa661ae
+    meta-qcom-distro:
+      commit: 70eabc36e1a8347cbe332e9b52acabd39f4832e0
