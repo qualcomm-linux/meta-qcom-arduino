@@ -6,6 +6,7 @@
 
 [![Build on push (wrynose)](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/push.yml?branch=wrynose&label=Build%20on%20push%20(wrynose))](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/push.yml?query=branch%3Awrynose)
 [![Nightly Build (wrynose)](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/nightly-build.yml?branch=wrynose&label=Nightly%20Build%20(wrynose))](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/nightly-build.yml?query=branch%3Awrynose)
+[![Weekly Build (wrynose)](https://img.shields.io/github/actions/workflow/status/qualcomm-linux/meta-qcom-arduino/weekly-build.yml?branch=wrynose&label=Weekly%20Build%20(wrynose))](https://github.com/qualcomm-linux/meta-qcom-arduino/actions/workflows/weekly-build.yml?query=branch%3Awrynose)
 
 ## Introduction
 
