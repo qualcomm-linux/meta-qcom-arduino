@@ -107,6 +107,10 @@ export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml:ci/linux-qcom-next.yml"
 export KAS_YAMLS="ci/uno-q.yml:ci/qcom-distro.yml:ci/linux-arduino.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
 
+# Build ventuno-q with the linux-arduino kernel instead of linux-qcom 6.18
+export KAS_YAMLS="ci/ventuno-q.yml:ci/qcom-distro.yml:ci/linux-arduino.yml"
+"${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"
+
 # World build (all recipes from meta-qcom and this layer)
 export KAS_YAMLS="ci/uno-q.yml:ci/world.yml"
 "${KAS_CONTAINER:-kas-container}" build "${KAS_YAMLS}"

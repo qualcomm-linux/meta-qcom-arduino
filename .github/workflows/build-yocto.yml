@@ -6,7 +6,7 @@ on:
       profile:
         required: false
         type: string
-        default: "full" # values: pr | full
+        default: "full" # values: pr | full | weekly
       skip_if_github_cached:
         required: false
         type: boolean
@@ -25,6 +25,10 @@ concurrency:
 env:
   CACHE_DIR: /efsx/qli/meta-qcom
   KAS_CLONE_DEPTH: 1
+  KAS_CONTAINER: ${{ github.workspace }}/kas-container
+  # Same image as the compile jobs of meta-qcom, so the lock and the checks
+  # run with the kas that builds
+  KAS_CONTAINER_IMAGE: ghcr.io/siemens/kas/kas@sha256:3f3d3257e8d4ca3adfcb2e0025e6da24339fb8d68a6999ca36c37381351582d5 # 5.5-9-g0555188
 
 jobs:
   kas-setup:
@@ -37,11 +41,12 @@ jobs:
 
       - name: Setting up kas-container
         run: |
-          KAS_CONTAINER=$GITHUB_WORKSPACE/kas-container
-          echo "KAS_CONTAINER=$KAS_CONTAINER" >> $GITHUB_ENV
+          docker create --name kas ${KAS_CONTAINER_IMAGE}
+          docker cp kas:/usr/local/bin/kas-container $KAS_CONTAINER
           LATEST=$(git ls-remote --tags --refs --sort="v:refname" https://github.com/siemens/kas | tail -n1 | sed 's/.*\///')
-          wget -qO ${KAS_CONTAINER} https://raw.githubusercontent.com/siemens/kas/refs/tags/$LATEST/kas-container
-          chmod +x ${KAS_CONTAINER}
+          if ! grep -q "KAS_CONTAINER_SCRIPT_VERSION=\"${LATEST}\"" $KAS_CONTAINER ; then
+            echo "Version "${LATEST}" of kas is available, please update "KAS_CONTAINER_IMAGE: $KAS_CONTAINER_IMAGE""
+          fi
 
       - name: Run kas lock
         run: |
@@ -128,8 +133,6 @@ jobs:
 
       - name: Setting up kas-container
         run: |
-          KAS_CONTAINER=$GITHUB_WORKSPACE/kas-container
-          echo "KAS_CONTAINER=$KAS_CONTAINER" >> $GITHUB_ENV
           chmod +x $KAS_CONTAINER
 
       - name: Run Yocto patchreview
@@ -171,6 +174,14 @@ jobs:
             yamlfile: ""
           - name: qcom-distro
             yamlfile: ':ci/qcom-distro.yml'
+          - name: qcom-distro-catchall
+            yamlfile: ':ci/qcom-distro-catchall.yml'
+          - name: debug
+            yamlfile: ':ci/qcom-distro-catchall.yml:ci/debug.yml:ci/nospdx.yml'
+            profile: weekly
+          - name: performance
+            yamlfile: ':ci/qcom-distro-catchall.yml:ci/performance.yml:ci/nospdx.yml'
+            profile: weekly
         kernel:
           - type: default
             dirname: ""
@@ -189,9 +200,62 @@ jobs:
                 type: arduino
                 dirname: "_linux-arduino"
                 yamlfile: ":ci/linux-arduino.yml"
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: arduino
+                dirname: "_linux-arduino"
+                yamlfile: ":ci/linux-arduino.yml"
+
+          # Also build qcom-distro with linux-qcom-rt-6.18 and
+          # linux-qcom-next-rt variants to validate RT support
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: rt-6.18
+                dirname: "_linux-qcom-rt-6.18"
+                yamlfile: ":ci/linux-qcom-rt-6.18.yml"
+
+          - machine: ventuno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: qcom-next-rt
+                dirname: "_linux-qcom-next-rt"
+                yamlfile: ":ci/linux-qcom-next-rt.yml"
+
+          - machine: uno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: rt-6.18
+                dirname: "_linux-qcom-rt-6.18"
+                yamlfile: ":ci/linux-qcom-rt-6.18.yml"
+
+          - machine: uno-q
+            distro:
+                name: qcom-distro
+                yamlfile: ':ci/qcom-distro.yml'
+            kernel:
+                type: qcom-next-rt
+                dirname: "_linux-qcom-next-rt"
+                yamlfile: ":ci/linux-qcom-next-rt.yml"
     uses: qualcomm-linux/meta-qcom/.github/workflows/compile.yml@wrynose
     with:
       name: ${{ matrix.machine }}/${{ matrix.distro.name }}${{ matrix.kernel.dirname }}
+      # Which profiles build this entry. Entries without distro.profile are
+      # built by every profile; an entry marked with distro.profile is built by
+      # that profile and by the wider ones above it, ordered pr < full (push
+      # and nightly) < weekly. Add "profile: weekly" to the distro entry of a
+      # target that is too expensive to build every night.
+      enabled: ${{ (matrix.distro.profile || 'any') == 'any' || (matrix.distro.profile == 'full' && inputs.profile != 'pr') || (matrix.distro.profile == 'weekly' && inputs.profile == 'weekly') }}
       # One world build per machine is enough for compile coverage. This
       # layer's ci/world.yml enables both layer-qcom and layer-qcom-arduino,
       # so a world build is expensive and the qcom-distro and alternate

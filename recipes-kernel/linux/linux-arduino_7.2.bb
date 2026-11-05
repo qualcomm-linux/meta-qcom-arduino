@@ -5,19 +5,30 @@ SECTION = "kernel"
 
 inherit kernel cml1
 
-COMPATIBLE_MACHINE = "(uno-q)"
+COMPATIBLE_MACHINE = "(arduino)"
 
-LINUX_VERSION ?= "7.0.14"
+LINUX_VERSION ?= "7.2.11"
 
 PV = "${LINUX_VERSION}"
 
-SRCREV ?= "f2e5cd16ede51a1bfaf2d4e179b74c6aaca8e438"
+# branch: qcom-v7.2.11-arduino
+SRCREV ?= "f56a3e0c99c68925a954778910129f3ee6371849"
 SRCBRANCH ?= "nobranch=1"
+
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = "\
     git://github.com/arduino/linux-qcom.git;${SRCBRANCH};protocol=https \
     file://configs/arduino.cfg \
 "
+
+# Board options, shared with the linux-qcom kernels
+SRC_URI:append:uno-q = " file://configs/uno-q.cfg"
+SRC_URI:append:ventuno-q = " file://configs/ventuno-q.cfg"
+
+# Build the DTBs with __symbols__, so the boot firmware can apply the DTB
+# overlays listed in the FIT image
+KERNEL_DTC_FLAGS:append:ventuno-q = " -@"
 
 S = "${UNPACKDIR}/${BP}"
 
