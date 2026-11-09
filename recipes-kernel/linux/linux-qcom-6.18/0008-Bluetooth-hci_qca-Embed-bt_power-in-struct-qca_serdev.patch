@@ -93,6 +93,7 @@ index 562218dfab68..35fa253a80bb 100644
  
 -	switch (qcadev->btsoc_type) {
 -	case QCA_QCC2072:
+-	case QCA_QCA6390:
 -	case QCA_WCN3950:
 -	case QCA_WCN3988:
 -	case QCA_WCN3990:
@@ -101,7 +102,6 @@ index 562218dfab68..35fa253a80bb 100644
 -	case QCA_WCN6750:
 -	case QCA_WCN6855:
 -	case QCA_WCN7850:
--	case QCA_QCA6390:
 -		qcadev->bt_power = devm_kzalloc(&serdev->dev,
 -						sizeof(struct qca_power),
 -						GFP_KERNEL);
