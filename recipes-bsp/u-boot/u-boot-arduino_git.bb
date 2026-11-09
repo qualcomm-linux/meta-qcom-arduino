@@ -1,7 +1,7 @@
 require recipes-bsp/u-boot/u-boot-common.inc
 require recipes-bsp/u-boot/u-boot.inc
 
-DEPENDS += "bc-native dtc-native gnutls-native python3-pyelftools-native skales-native xxd-native"
+DEPENDS += "bc-native dtc-native gnutls-native python3-pyelftools-native skales-native xxd-native devicetree-uno-q"
 
 SRC_URI = "git://github.com/arduino/u-boot.git;branch=${SRCBRANCH};protocol=https \
            file://0001-Add-support-for-OpenSSL-Provider-API.patch \
@@ -20,7 +20,9 @@ uboot_compile_config:append() {
     touch empty-file
     rm -f u-boot-nodtb.bin.gz
     gzip -k u-boot-nodtb.bin
-    cat u-boot-nodtb.bin.gz ${DEPLOY_DIR_IMAGE}/${type}.dtb > u-boot-nodtb.bin.gz-${type}
+    dtb=${RECIPE_SYSROOT}/boot/devicetree/${type}.dtb
+    [ -e $dtb ] || dtb=${DEPLOY_DIR_IMAGE}/${type}.dtb
+    cat u-boot-nodtb.bin.gz $dtb > u-boot-nodtb.bin.gz-${type}
     ${STAGING_BINDIR_NATIVE}/skales/mkbootimg --base 0x80000000 --pagesize 4096 --kernel u-boot-nodtb.bin.gz-${type} --cmdline "root=/dev/notreal" --ramdisk empty-file --output u-boot-${type}.bin
 }
 do_compile[depends] += "virtual/kernel:do_deploy"
