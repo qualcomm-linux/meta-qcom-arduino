@@ -89,9 +89,9 @@ index 35fa253a80bb..d89615caa128 100644
  	case QCA_QCC2072:
  	case QCA_WCN3950:
 @@ -2443,17 +2478,9 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 	case QCA_WCN6750:
  	case QCA_WCN6855:
  	case QCA_WCN7850:
- 	case QCA_WCN6750:
 -		/*
 -		 * OF graph link is only present for BT devices attached through
 -		 * the M.2 Key E connector.
