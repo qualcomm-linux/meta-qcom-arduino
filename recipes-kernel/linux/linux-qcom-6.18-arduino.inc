@@ -12,4 +12,6 @@ SRC_URI:append:ventuno-q = " \
     file://0010-Bluetooth-hci_qca-Flatten-struct-qca_power-into-struct-qca_.patch \
     file://0011-dt-bindings-connector-pcie-m2-e-Add-vendor-LGA-connector-co.patch \
     file://0012-arm64-dts-qcom-monaco-arduino-monza-Add-QCA2066-M.2-WiFi-BT.patch \
+    file://0013-Bluetooth-hci_qca-Reopen-the-UART-after-enabling-QCA.patch \
+    file://0014-Bluetooth-hci_qca-Don-t-use-the-serdev-port-after-a-.patch \
 "
