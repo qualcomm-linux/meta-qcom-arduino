@@ -1,0 +1,147 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shuai Zhang <shuai.zhang@oss.qualcomm.com>
+Date: Thu, 12 Nov 2026 16:35:02 +0800
+Subject: [PATCH 13/14] Bluetooth: hci_qca: Reopen the UART after enabling
+ QCA2066
+
+QCA2066 does not reopen the UART after the controller is enabled, which
+causes RX/TX out-of-sync errors. The UART has to be reopened once the
+controller is powered on.
+
+qca_regulator_init() already enables the controller and then reopens the
+UART, but QCA2066 does not go through it. QCA2066 was added with its own
+SoC type and handled in the default case.
+
+Let QCA2066 go through qca_regulator_init() as well, and handle it in the
+other places that check the SoC type in the same way. This also applies
+the baudrate switching, flow control, shutdown and probe handling of
+those chips to QCA2066. btqca.c checks the SoC type in the same way, so
+the firmware version is also shown in the log.
+
+Link: https://lore.kernel.org/all/20261110092929.234617-2-shuai.zhang@oss.qualcomm.com/
+[shuai: struct qca_power is already flattened on this branch, so there is
+ no bt_power allocation to extend, and the power off function is
+ qca_power_shutdown()]
+Signed-off-by: Shuai Zhang <shuai.zhang@oss.qualcomm.com>
+
+Upstream-Status: Backport [https://lore.kernel.org/all/20261110092929.234617-2-shuai.zhang@oss.qualcomm.com/]
+---
+ drivers/bluetooth/btqca.c   |  1 +
+ drivers/bluetooth/hci_qca.c | 12 ++++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/drivers/bluetooth/btqca.c b/drivers/bluetooth/btqca.c
+index 7affced..540181f 100644
+--- a/drivers/bluetooth/btqca.c
++++ b/drivers/bluetooth/btqca.c
+@@ -1067,6 +1067,7 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
+ 	switch (soc_type) {
+ 	case QCA_WCN3991:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_QCC2072:
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 5c8e569..f19a8cb 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -1376,6 +1376,7 @@ static int qca_set_baudrate(struct hci_dev *hdev, uint8_t baudrate)
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 		usleep_range(1000, 10000);
+@@ -1464,6 +1465,7 @@ static int qca_check_speeds(struct hci_uart *hu)
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 		if (!qca_get_speed(hu, QCA_INIT_SPEED) &&
+@@ -1507,6 +1509,7 @@ static int qca_set_speed(struct hci_uart *hu, enum qca_speed_type speed_type)
+ 		case QCA_WCN3991:
+ 		case QCA_WCN3998:
+ 		case QCA_WCN6750:
++		case QCA_QCA2066:
+ 		case QCA_WCN6855:
+ 		case QCA_WCN7850:
+ 		case QCA_QCC2072:
+@@ -1543,6 +1546,7 @@ error:
+ 		case QCA_WCN3991:
+ 		case QCA_WCN3998:
+ 		case QCA_WCN6750:
++		case QCA_QCA2066:
+ 		case QCA_WCN6855:
+ 		case QCA_WCN7850:
+ 		case QCA_QCC2072:
+@@ -1859,6 +1863,7 @@ static int qca_power_on(struct hci_dev *hdev)
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_QCA6390:
+@@ -1987,6 +1992,7 @@ retry:
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_QCC2072:
+@@ -2021,6 +2027,7 @@ retry:
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_QCC2072:
+@@ -2282,6 +2289,7 @@ static void qca_power_shutdown(struct hci_uart *hu)
+ 		break;
+ 
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_QCC2072:
+ 		gpiod_set_value_cansleep(qcadev->bt_en, 0);
+@@ -2464,6 +2472,7 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 	case QCA_WCN3990:
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 	case QCA_WCN6750:
+@@ -2511,6 +2520,7 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 
+ 		if (!qcadev->bt_en &&
+ 		    (data->soc_type == QCA_WCN6750 ||
++		     data->soc_type == QCA_QCA2066 ||
+ 		     data->soc_type == QCA_WCN6855 ||
+ 		     data->soc_type == QCA_QCC2072 ||
+ 		     data->soc_type == QCA_WCN7850))
+@@ -2520,6 +2530,7 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+ 					       GPIOD_IN);
+ 		if (IS_ERR(qcadev->sw_ctrl) &&
+ 		    (data->soc_type == QCA_WCN6750 ||
++		     data->soc_type == QCA_QCA2066 ||
+ 		     data->soc_type == QCA_WCN6855 ||
+ 		     data->soc_type == QCA_QCC2072 ||
+ 		     data->soc_type == QCA_WCN7850)) {
+@@ -2618,6 +2629,7 @@ static void qca_serdev_remove(struct serdev_device *serdev)
+ 	case QCA_WCN3991:
+ 	case QCA_WCN3998:
+ 	case QCA_WCN6750:
++	case QCA_QCA2066:
+ 	case QCA_WCN6855:
+ 	case QCA_WCN7850:
+ 		if (qcadev->vregs_on)
+-- 
+2.34.1
+
