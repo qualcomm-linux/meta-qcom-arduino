@@ -48,7 +48,7 @@ index 562218dfab68..35fa253a80bb 100644
  
 -	if (!qcadev->bt_power->vregs_on) {
 +	if (!qcadev->bt_power.vregs_on) {
- 		serdev_device_close(hu->serdev);
+ 		qca_port_close(hu);
  		ret = qca_regulator_enable(qcadev);
  		if (ret)
 @@ -2257,7 +2257,7 @@ static void qca_power_shutdown(struct hci_uart *hu)
