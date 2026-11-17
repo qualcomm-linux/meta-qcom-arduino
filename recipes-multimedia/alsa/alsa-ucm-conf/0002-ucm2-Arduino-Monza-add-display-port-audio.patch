@@ -1,0 +1,64 @@
+From d2306b01aa595ae9d393f6852ffdbe2b226f4872 Mon Sep 17 00:00:00 2001
+From: Srinivas Kandagatla <srinivas.kandagatla@oss.qualcomm.com>
+Date: Fri, 22 May 2026 09:52:34 +0000
+Subject: [PATCH] ucm2: Arduino Monza: add display port audio
+
+Enable Display port audio on Arduino VENTUNO-Q board.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/793
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@oss.qualcomm.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+
+[kumar.singh@oss.qualcomm.com: the upstream commit put the
+'DISPLAY_PORT_RX_0 Audio Mixer MultiMedia3' cset in the verb-level
+EnableSequence, which runs on every board activating the HiFi verb
+regardless of whether a DP sink is present. On boards where that
+control doesn't exist, the cset fails, verb activation fails, and
+PipeWire drops the entire HiFi profile rather than just DP. Move the
+cset into the HDMI2 device's own Enable/DisableSequence so it only
+runs when DP is actually selected.]
+Signed-off-by: Kumar Anurag <kumar.singh@oss.qualcomm.com>
+
+Upstream-Status: Backport [https://github.com/alsa-project/alsa-ucm-conf/commit/d2306b01aa595ae9d393f6852ffdbe2b226f4872] (modified: move DISPLAY_PORT_RX_0 cset into HDMI2's own enable/disable sequence so HiFi verb activation doesn't fail on boards without a DP sink)
+---
+ ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf b/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
+index 9a3b6a8..134e6b3 100644
+--- a/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
++++ b/ucm2/Qualcomm/qcs8300/arduino-monza/HiFi.conf
+@@ -98,7 +98,7 @@ SectionDevice."Earpiece" {
+ 	]
+
+ }
+-SectionDevice."HDMI" {
++SectionDevice."HDMI1" {
+ 	Comment "HDMI playback"
+
+ 	Value {
+@@ -133,3 +133,21 @@ SectionDevice."Headset" {
+ 		CapturePCM "hw:${CardId},3"
+ 	}
+ }
++
++SectionDevice."HDMI2" {
++	Comment "USB/DisplayPort 0 playback"
++
++	Value {
++		PlaybackPriority 200
++		PlaybackPCM "hw:${CardId},2"
++		JackControl "DP0 Jack"
++	}
++
++	EnableSequence [
++		cset "name='DISPLAY_PORT_RX_0 Audio Mixer MultiMedia3' 1"
++	]
++
++	DisableSequence [
++		cset "name='DISPLAY_PORT_RX_0 Audio Mixer MultiMedia3' 0"
++	]
++}
+--
+2.43.0
+
