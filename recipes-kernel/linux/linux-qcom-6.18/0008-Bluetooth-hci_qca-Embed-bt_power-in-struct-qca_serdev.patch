@@ -19,15 +19,16 @@ Reviewed-by: Bartosz Golaszewski <bartosz.golaszewski@oss.qualcomm.com>
 Link: https://lore.kernel.org/r/20260904-monza-wireless-v6-7-d8c5042b3efd@oss.qualcomm.com
 Signed-off-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
 Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
-[rsalveti: QCC2072 is in the bt_power allocation switch on this branch, so the
- removed switch differs in its case labels; pwrseq_disable() is still
- pwrseq_power_off() and qca_power_off() is still qca_power_shutdown() here]
+[rsalveti: QCC2072 and QCA2066 are in the bt_power allocation switch on
+ this branch, so the removed switch differs in its case labels;
+ pwrseq_disable() is still pwrseq_power_off() and qca_power_off() is still
+ qca_power_shutdown() here]
 Signed-off-by: Ricardo Salveti <ricardo.salveti@oss.qualcomm.com>
 
 Upstream-Status: Submitted [https://lore.kernel.org/r/20260904-monza-wireless-v6-7-d8c5042b3efd@oss.qualcomm.com]
 ---
- drivers/bluetooth/hci_qca.c | 73 +++++++++++++------------------------
- 1 file changed, 26 insertions(+), 47 deletions(-)
+ drivers/bluetooth/hci_qca.c | 74 +++++++++++++------------------------
+ 1 file changed, 26 insertions(+), 48 deletions(-)
 
 diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
 index 562218dfab68..35fa253a80bb 100644
@@ -87,7 +88,7 @@ index 562218dfab68..35fa253a80bb 100644
  
  	/* Already disabled? */
  	if (!power->vregs_on)
-@@ -2433,27 +2433,6 @@ static int qca_serdev_probe(struct serdev_device *serdev)
+@@ -2433,28 +2433,6 @@ static int qca_serdev_probe(struct serdev_device *serdev)
  	else
  		qcadev->btsoc_type = QCA_ROME;
  
@@ -100,6 +101,7 @@ index 562218dfab68..35fa253a80bb 100644
 -	case QCA_WCN3991:
 -	case QCA_WCN3998:
 -	case QCA_WCN6750:
+-	case QCA_QCA2066:
 -	case QCA_WCN6855:
 -	case QCA_WCN7850:
 -		qcadev->bt_power = devm_kzalloc(&serdev->dev,
