@@ -37,9 +37,11 @@ env:
   # exists upstream.
   LAVA_TEST_PLANS_PROJECT: "meta-qcom-arduino"
   # CalVer tag in qcom-linux-testkit repository (format: testkit-YYYY.MM.DD).
-  # Only boot test plans run here, so no test definition is pulled from it yet;
-  # kept in sync with meta-qcom so the pin is meaningful once tests are added.
-  TESTKIT_REF: "testkit-2026.09.27"
+  # The pre-merge test plans pull their test definitions from it. Newer tags,
+  # such as testkit-2026.11.01 used by meta-qcom, no longer find the PipeWire
+  # microphone source on ventuno-q, so AudioRecord falls back to direct ALSA
+  # capture and fails; check pre-merge-audio before moving past this tag.
+  TESTKIT_REF: "testkit-2026.10.12"
 
 jobs:
   prepare-env:
