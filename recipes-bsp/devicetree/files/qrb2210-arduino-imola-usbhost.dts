@@ -10,7 +10,12 @@
 #include "qrb2210-arduino-imola.dts"
 #endif
 
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,4,0)
+&usb {
+#else
 &usb_dwc3 {
+#endif
 	dr_mode = "host";
 	/delete-property/ usb-role-switch;
 };
