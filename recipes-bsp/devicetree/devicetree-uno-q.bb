@@ -8,6 +8,10 @@ SRC_URI = "file://qrb2210-arduino-imola-usbhost.dts"
 
 IMOLA_USBC_OVERLAY = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts/qcom/qrb2210-arduino-imola-video_sound-usbc.dtso"
 
+# to provide include <linux/version.h>
+DT_INCLUDE:append = " ${STAGING_KERNEL_BUILDDIR}/include/generated/uapi"
+do_compile[depends] += "virtual/kernel:do_shared_workdir"
+
 # linux-arduino builds qrb2210-arduino-imola.dtb from the base DTB and the
 # USB-C video / sound overlay, apply the same overlay here.
 python do_compile:append() {
